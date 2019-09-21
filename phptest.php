@@ -1,8 +1,13 @@
 <?php
+<<<<<<< HEAD
+=======
+
+>>>>>>> a46dacd637f856c7c1bfa30cf11d0830b20f655a
     function getMetaData($filename) {
     $head = file_get_contents($filename, FALSE, NULL, 0, 23040);
-    $endpost = strpost($testdata, 'END') + 3;
-    $head_arr = explode(" /", $testdata);
+    $endpos = strpos($head, 'END') + 3;
+    $head = substr($head, 0, $endpos);
+    $head_arr = explode(" /", $head);
     return $head_arr;
     }
 
