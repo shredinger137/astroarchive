@@ -1,0 +1,25 @@
+{
+  "name": "gort-archive",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "mongod": "^2.0.0",
+    "mongodb": "^3.3.2",
+    "mysql": "^2.17.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/caseylewiston/gort-archive.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/caseylewiston/gort-archive/issues"
+  },
+  "homepage": "https://gitlab.com/caseylewiston/gort-archive#readme"
+}
