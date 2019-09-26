@@ -9,7 +9,32 @@ var mongourl = 'mongodb://localhost/gortarchive';
 var headerobj = {};
 let headerArr;
 let entries = [];
+var http = require('http');
 
+http.createServer(function (req, res) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("gortarchive");
+    dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1}}).toArray(function(err, result) {
+      if (err) {
+        throw err
+      }
+
+      if (result) {
+        let msg = result;
+        console.log("SignUpErr inside:", msg);
+
+        return res.end(JSON.stringify({
+         msg
+        }));
+      };
+
+    });
+  });
+
+}).listen(3001);
 
 
 function addFile(filename, properties){
@@ -20,13 +45,23 @@ function addFile(filename, properties){
     properties['filename'] = filename;
     dbo.collection("gortarchive").insertOne(properties, function(err, res) {
       if (err) throw err;
-      console.log("1 document inserted");
+      console.log("1 document inserted, " + filename);
       db.close();
     });
   });
 }
 
 function deleteEntry(filename){
+  mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("gortarchive");
+    var myquery = { filename: filename};
+    dbo.collection("gortarchive").deleteOne(myquery, function(err, obj) {
+      if (err) throw err;
+      console.log("1 document deleted, " + filename);
+      db.close();
+    });
+  });
 }
 
 function callAdd(filename){
@@ -95,7 +130,8 @@ function parseHeader(rawHeaderText){
 
 
   function getEntries(){
-    mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) { if (err) throw err;
+    mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) { 
+      if (err) throw err;
       var dbo = db.db("gortarchive");
       dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1}}).toArray(function(err, result) {
         let tempresult = [];
@@ -130,13 +166,15 @@ function syncEntries(entries){
     for(var i=0; i<entries.length; i++){
       if(!files.includes(entries[i]))
         {
-          toDelete.push(files[i]); 
+          toDelete.push(entries[i]); 
         }
     }
     for(var i=0; i<toAdd.length; i++){
        callAdd(toAdd[i]);
     }
-  });
+    for(var i=0; i<toDelete.length; i++){
+      deleteEntry(toDelete[i]);
+    }});
 }
 
 

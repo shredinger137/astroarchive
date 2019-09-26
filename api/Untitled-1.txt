@@ -1,0 +1,38 @@
+http.createServer(function (req, res) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("gortarchive");
+    db.collection('gortarchive').find({}, function (err, result) {
+      if (err) {
+        throw err
+      }
+
+      if (result) {
+        let msg = result;
+        console.log("SignUpErr inside:", msg);
+
+        return res.end(JSON.stringify({
+          SignUpErr: "document inserted"
+        }));
+      }
+
+    });
+  });
+
+}).listen(3001);
+
+
+    mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) { if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1}}).toArray(function(err, result) {
+        let tempresult = [];
+        for(var i = 0; i < result.length; i++)
+        {
+          tempresult.push(result[i]['filename']);
+        }
+        result = tempresult;
+        if (err) throw err;
+        db.close();
+        syncEntries(tempresult);
