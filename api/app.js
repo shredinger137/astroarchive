@@ -10,24 +10,29 @@ var headerobj = {};
 let headerArr;
 let entries = [];
 var http = require('http');
+var cors = require('cors');
+var express=require('express');
+var expapp = express();
+
 
 http.createServer(function (req, res) {
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
-    dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1}}).toArray(function(err, result) {
+    dbo.collection("gortarchive").find({},{ projection: {
+      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1
+    }}).toArray(function(err, result) {
       if (err) {
         throw err
       }
 
       if (result) {
-        let msg = result;
-        console.log("SignUpErr inside:", msg);
-
+        let items = result;
         return res.end(JSON.stringify({
-         msg
+         items
         }));
       };
 
@@ -90,6 +95,7 @@ async function readHeader(filename, readable) {
    headerArr[i] = headerArr[i].split(regex2);
    headerArr[i][0] = headerArr[i][0].replace(/\./g,'');
    headerArr[i][0] = headerArr[i][0].replace(/\s/, '');
+   headerArr[i][0] = headerArr[i][0].replace(/-/, '');
 }
   var headerobjtemp = {};
   for (var i=0, iLen=headerArr.length; i<iLen; i++) {
