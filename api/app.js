@@ -13,6 +13,11 @@ var http = require('http');
 var cors = require('cors');
 var express=require('express');
 var expapp = express();
+var cron = require('node-cron');
+
+cron.schedule('* 5 * * *', () => {
+ getEntries();
+});
 
 
 http.createServer(function (req, res) {
@@ -94,11 +99,18 @@ async function readHeader(filename, readable) {
    headerArr[i] = headerArr[i].replace(/\/.*/, '');
    headerArr[i] = headerArr[i].split(regex2);
    headerArr[i][0] = headerArr[i][0].replace(/\./g,'');
-   headerArr[i][0] = headerArr[i][0].replace(/\s/, '');
    headerArr[i][0] = headerArr[i][0].replace(/-/, '');
+   headerArr[i][0] = headerArr[i][0].replace(/\s/, '');
+   if (!headerArr[i][1]){
+     headerArr.splice(i,1);
+   }
 }
   var headerobjtemp = {};
   for (var i=0, iLen=headerArr.length; i<iLen; i++) {
+    if (headerArr[i][1].indexOf(/[a-zA-Z]\s*'/)){
+      console.log(headerArr[i][1]);
+           headerArr[i][1] = headerArr[i][1].replace(/'/g, '');
+    }
     headerobjtemp[headerArr[i][0]] = headerArr[i][1];
   }
   headerobj = headerobjtemp;
