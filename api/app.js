@@ -98,7 +98,7 @@ async function readHeader(filename, readable) {
    headerArr[i] = headerArr[i].replace(/\s\s+/g, ' ');
    headerArr[i] = headerArr[i].replace(/\/.*/, '');
    headerArr[i] = headerArr[i].split(regex2);
-   headerArr[i][0] = headerArr[i][0].replace(/\./g,'');
+   headerArr[i][0] = headerArr[i][0].replace(/\.*\s*\-*/g,'');
    headerArr[i][0] = headerArr[i][0].replace(/-/, '');
    headerArr[i][0] = headerArr[i][0].replace(/\s/, '');
    if (!headerArr[i][1]){
@@ -108,13 +108,13 @@ async function readHeader(filename, readable) {
   var headerobjtemp = {};
   for (var i=0, iLen=headerArr.length; i<iLen; i++) {
     if (headerArr[i][1].indexOf(/[a-zA-Z]\s*'/)){
-      console.log(headerArr[i][1]);
-           headerArr[i][1] = headerArr[i][1].replace(/'/g, '');
+       headerArr[i][1] = headerArr[i][1].replace(/'/g, '');
     }
     headerobjtemp[headerArr[i][0]] = headerArr[i][1];
   }
   headerobj = headerobjtemp;
-  addFile(filename, headerobj);
+  if(headerobj['filename'] != ""){
+  addFile(filename, headerobj); }
   return headerobj;
 }
 

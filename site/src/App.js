@@ -27,13 +27,17 @@ getData(){
     
   return (
     <div className="App">
+      <h1 className="headertext">GORT Image Archive</h1>
+
+     
       <table>
-  
         <tr>
-        <td></td>
-        <td>Object</td>
-        <td>Date</td>
-        <td>Temp</td>
+        <th></th>
+        <th>Object</th>
+        <th>Date</th>
+        <th>Temp</th>
+        <th>Filter</th>
+        <th>Observer</th>
         </tr>
 
       
@@ -42,7 +46,9 @@ getData(){
           <td><a href={`http://gtn.sonoma.edu/archive/${items.filename}`} download>Download</a></td>
           <td>{items.OBJECT}</td>  
           <td>{items.DATEOBS}</td>
-          <td>{items.TEMPERAT}</td>
+          <td>{items.TEMPERAT}</td> 
+          <td>{items.FILTER}</td>
+          <td>{items.OBSERVER}</td>
         </tr>
         
             )
