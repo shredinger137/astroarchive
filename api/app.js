@@ -12,40 +12,45 @@ let entries = [];
 var http = require('http');
 var cors = require('cors');
 var express=require('express');
-var expapp = express();
+var app = express();
 var cron = require('node-cron');
+var page = 0;
+var count = 50;
 
 cron.schedule('* 5 * * *', () => {
  getEntries();
 });
 
 
-http.createServer(function (req, res) {
+app.get('/', function(req, res){
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/plain');
   res.setHeader('Access-Control-Allow-Origin', '*');
+  if(req.query.page){
+    var page = req.query.page;
+  } 
+ 
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
     dbo.collection("gortarchive").find({},{ projection: {
-      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1
+      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1, OBSERVER: 1
     }}).toArray(function(err, result) {
       if (err) {
         throw err
       }
 
       if (result) {
-        let items = result;
-        return res.end(JSON.stringify({
-         items
-        }));
+        var count = 700;
+        let items = JSON.stringify({result});
+        res.send({'count': count, 'items': result});
       };
 
     });
   });
+});
 
-}).listen(3001);
-
+app.listen(3001)
 
 function addFile(filename, properties){
   console.log("AddFile");

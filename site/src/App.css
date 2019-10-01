@@ -2,6 +2,11 @@ body {
   background-color: #180034;
 }
 
+li {
+  display: inline;
+  color: white;
+  padding: 7px;
+}
 .App {
   text-align: center;
   
