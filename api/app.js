@@ -23,30 +23,45 @@ cron.schedule('* 5 * * *', () => {
 
 
 app.get('/', function(req, res){
+  var data = [];
+  var page = 0;
+  var perpage = 10000;
   res.statusCode = 200;
   res.setHeader('Content-Type', 'text/plain');
   res.setHeader('Access-Control-Allow-Origin', '*');
   if(req.query.page){
-    var page = req.query.page;
-  } 
+    var page = req.query.page - 1;
+      if(req.query.perpage){
+        perpage = parseInt(req.query.perpage);
+      }
+  }
  
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
     dbo.collection("gortarchive").find({},{ projection: {
-      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1, OBSERVER: 1
-    }}).toArray(function(err, result) {
+      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1, XPIXSZ: 1, OBSERVER: 1
+    }}).skip(page * perpage).limit(perpage).toArray(function(err, result) {
       if (err) {
         throw err
       }
 
       if (result) {
-        var count = 700;
-        let items = JSON.stringify({result});
-        res.send({'count': count, 'items': result});
-      };
+        data.push(result);
+        dbo.collection("gortarchive").find({},{}).count(function(err, countres) {
+          if (err) {
+            throw err
+          }
+          if (countres) {
+            res.send({'count': countres, 'items': result});
+          }
+        }
+
+        
+        )};
 
     });
+
   });
 });
 

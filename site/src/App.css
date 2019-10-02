@@ -2,6 +2,16 @@ body {
   background-color: #180034;
 }
 
+.pagelink  {
+  color: white;
+  text-decoration: none;  
+}
+
+.pagelinks {
+  width: 100%;
+}
+
+
 li {
   display: inline;
   color: white;
