@@ -8,12 +8,15 @@ body {
 }
 
 .pagelinks {
-  width: 100%;
+  margin: auto;
+  width: 70vw;
+  padding: 10px;
+  text-align: center;
 }
 
 
 li {
-  display: inline;
+  display: inline-block;
   color: white;
   padding: 7px;
 }

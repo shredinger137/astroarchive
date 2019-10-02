@@ -83,9 +83,11 @@ getData(){
       <h1 className="headertext">GORT Image Archive</h1>
         <p style={{color: 'white'}}>Count: {this.state.totalItems}<br />
         <div className="pagelinks">
+        <ul>
           {pageNumbers.map(nums => (
-            <li><a href={"./?page=" + nums} className="pagelink">{nums}</a></li>           
+            <li><a href={"./?page=" + nums} className="pagelink">{nums}</a></li> 
           ))}  
+          </ul>
         </div>
         </p>        
                 
@@ -105,7 +107,7 @@ getData(){
           <td><a href={`http://gtn.sonoma.edu/archive/${items.filename}`} download>Download</a></td>
           <td>{items.OBJECT}</td>  
           <td>{items.DATEOBS}</td>
-          <td>{items.XPIXSZ}</td> 
+              <td>{items.XPIXSZ ? items.XPIXSZ.substr(0,6) : ''}</td> 
           <td>{items.FILTER}</td>
           <td>{items.OBSERVER}</td>
         </tr>
