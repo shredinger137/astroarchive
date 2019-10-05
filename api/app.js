@@ -68,19 +68,18 @@ app.get('/', function(req, res){
 app.listen(3001)
 
 function addFile(filename, properties){
+  console.log("AddFile");
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
     properties['filename'] = filename;
     dbo.collection("gortarchive").insertOne(properties, function(err, res) {
       if (err) throw err;
-      console.log("1 file added, " + filename);
+      console.log("1 document inserted, " + filename);
       db.close();
     });
   });
 }
-
-
 
 function deleteEntry(filename){
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
@@ -89,7 +88,7 @@ function deleteEntry(filename){
     var myquery = { filename: filename};
     dbo.collection("gortarchive").deleteOne(myquery, function(err, obj) {
       if (err) throw err;
-      console.log("1 file deleted, " + filename);
+      console.log("1 document deleted, " + filename);
       db.close();
     });
   });
@@ -168,7 +167,23 @@ function parseHeader(rawHeaderText){
   };
 
 
-
+  function getEntries(){
+    mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) { 
+      if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1}}).toArray(function(err, result) {
+        let tempresult = [];
+        for(var i = 0; i < result.length; i++)
+        {
+          tempresult.push(result[i]['filename']);
+        }
+        result = tempresult;
+        if (err) throw err;
+        db.close();
+        syncEntries(tempresult);
+      });
+    });
+  }
 
 
 function syncEntries(entries){
