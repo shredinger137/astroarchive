@@ -91,7 +91,7 @@ class App extends React.Component {
   return (
     <div className="App">
       <h1 className="headertext">GORT Image Archive</h1>
-        <p style={{color: 'white'}}>Count: {this.state.totalItems}<br /></p>
+        <p style={{color: 'white'}}>Image Count: {this.state.totalItems}<br /></p>
         <select name="objectfilter">
             <option value="" key="null">Object Filter (Off)</option>
           {this.state.objectList.map(targets => (
