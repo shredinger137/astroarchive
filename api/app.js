@@ -84,7 +84,7 @@ app.get('/stats', function(req, res){
 app.listen(3001)
 
 function addFile(filename, properties){
-  if(filename.indexOf('Dark') > 0 || filename.indexOf('bias') > 0){}
+  if(filename.indexOf('Dark') > 0 || filename.indexOf('Bias') > 0){}
   else {
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
