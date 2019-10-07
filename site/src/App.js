@@ -1,5 +1,6 @@
 import React from 'react';
 import './App.css';
+import { config } from './config.js';
 
 //Empty comment - remove this
 
@@ -22,13 +23,24 @@ class App extends React.Component {
     this.loadPage();
   }
 
+  dateConvert1(datetime)
+  {
+    if(datetime){
+    var input = datetime.trim() + "Z";
+    var date = new Date(input);
+    var datestring = (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes(); 
+    return(datestring)
+  }
+  }
+
+
   loadPage(){
     const params = new URLSearchParams(window.location.search);
     const page = parseInt(params.get('page')) || 1;
     const perpage = parseInt(params.get('perpage')) || 50;
     if (page !== this.state.page){
 
-    fetch('http://localhost:3001?page=' + page + "&perpage=" + perpage)
+    fetch(config.api + "?page=" + page + "&perpage=" + perpage)
     .then((response) => response.json())
     .then((responseJson) => {
       this.setState({items: responseJson.items, totalPages: (responseJson.count / this.state.perpage), 
@@ -86,41 +98,44 @@ getData(){
   return (
     <div className="App">
       <h1 className="headertext">GORT Image Archive</h1>
-        <p style={{color: 'white'}}>Count: {this.state.totalItems}<br />
+        <p style={{color: 'white'}}>Count: {this.state.totalItems}<br /></p>
         <div className="pagelinks">
         <ul>
           {pageNumbers.map(nums => (
-            <li><a href={"./?page=" + nums + "&perpage=" + this.state.perpage} className="pagelink">{nums}</a></li> 
+            <li key={nums}><a href={"./?page=" + nums + "&perpage=" + this.state.perpage} className="pagelink">{nums}</a></li> 
           ))}  
           </ul>
         </div>
-        </p>        
+
                 
         <table>
-        <tr>
-        <th></th>
-        <th>Object</th>
-        <th>Date/Time</th>
-        <th>CCD Temp</th>
-        <th>Filter</th>
-        <th>Observer</th>
-        </tr>
+          <thead>
+            <tr>
+            <th></th>
+            <th>Object</th>
+            <th>Date/Time (UTC)</th>
+            <th>CCD Temp</th>
+            <th>Filter</th>
+            <th>Observer</th>
+            </tr>
+          </thead>
 
-      
-      {this.state.items.map(items => ( 
-        <tr>
-          <td><a href={`http://gtn.sonoma.edu/archive/${items.filename}`} download>Download</a></td>
-          <td>{items.OBJECT}</td>  
-          <td>{items.DATEOBS}</td>
-              <td>{items.XPIXSZ ? items.XPIXSZ.substr(0,6) : ''}</td> 
-          <td>{items.FILTER}</td>
-          <td>{items.OBSERVER}</td>
-        </tr>
+        <tbody>
+          {this.state.items.map(items => ( 
+            <tr key={items.filename}>
+              <td><a href={`http://gtn.sonoma.edu/archive/${items.filename}`} download>Download</a></td>
+              <td>{items.OBJECT}</td>  
+              <td>{this.dateConvert1(items.DATEOBS)}</td>
+                  <td>{items.CCDTEMP ? items.CCDTEMP.substr(0,7) : ''}</td> 
+              <td>{items.FILTER}</td>
+              <td>{items.OBSERVER}</td>
+            </tr>
         
             )
 
 
             )}
+        </tbody>
       </table>
     </div>
   )};
