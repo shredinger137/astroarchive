@@ -40,8 +40,8 @@ app.get('/', function(req, res){
     if (err) throw err;
     var dbo = db.db("gortarchive");
     dbo.collection("gortarchive").find({},{ projection: {
-      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1, XPIXSZ: 1, OBSERVER: 1
-    }}).skip(page * perpage).limit(perpage).toArray(function(err, result) {
+      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1, CCDTEMP: 1, OBSERVER: 1
+    }}).sort( {DATEOBS: -1} ).skip(page * perpage).limit(perpage).toArray(function(err, result) {
       if (err) {
         throw err
       }
