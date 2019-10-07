@@ -6,6 +6,7 @@
 		'sudo git reset --hard origin/master',
 		'sudo git pull origin master',
 		'sudo npm build',
+		'sudo cp site/build/* build/'
 	);
 
 	// Run the commands for output
