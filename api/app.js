@@ -55,20 +55,37 @@ app.get('/', function(req, res){
           if (countres) {
             res.send({'count': countres, 'items': result});
           }
-        }
-
-        
+        }     
         )};
-
     });
+  });
+});
 
+
+app.get('/stats', function(req, res){
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("gortarchive");
+    dbo.collection("stats").find({},{}).toArray(function(err, result) {
+      if (err) {
+        throw err
+      }
+
+      if (result) {
+        res.send({result});
+      };
+    });
   });
 });
 
 app.listen(3001)
 
 function addFile(filename, properties){
-  console.log("AddFile");
+  if(filename.indexOf('Dark') > 0 || filename.indexOf('bias') > 0){}
+  else {
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
@@ -79,6 +96,7 @@ function addFile(filename, properties){
       db.close();
     });
   });
+}
 }
 
 function deleteEntry(filename){
@@ -171,16 +189,17 @@ function parseHeader(rawHeaderText){
     mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) { 
       if (err) throw err;
       var dbo = db.db("gortarchive");
-      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1}}).toArray(function(err, result) {
+      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1, OBJECT: 1}}).toArray(function(err, result) {
         let tempresult = [];
         for(var i = 0; i < result.length; i++)
         {
           tempresult.push(result[i]['filename']);
         }
-        result = tempresult;
+        //result = tempresult;
         if (err) throw err;
         db.close();
         syncEntries(tempresult);
+        makeStats(result);
       });
     });
   }
@@ -215,5 +234,34 @@ function syncEntries(entries){
     }});
 }
 
+function makeStats(entries){
+  var stats = {};
+  var objects = [];
+  var objects_clean = [];
+  for(var i=0; i<entries.length; i++)
+  {
+    objects.push(entries[i]['OBJECT']);
+  }
+  console.log(objects);
+  for(var i=0; i<objects.length;i++){
+    if(objects[i] && objects_clean.indexOf(objects[i]) < 0){
+      objects_clean.push(objects[i])
+    } 
+  }
+  stats = {
+    'name': 'objects',
+    'objects': objects_clean 
+  };
+  mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
+    if (err) throw err;
+    var dbo = db.db("gortarchive");
+    dbo.collection("stats").replaceOne(
+      {"name" : "objects"},
+      stats,
+      {upsert: true}
+    );
+}
+);
+  }
 
 getEntries();

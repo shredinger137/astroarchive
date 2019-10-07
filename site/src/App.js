@@ -2,9 +2,6 @@ import React from 'react';
 import './App.css';
 import { config } from './config.js';
 
-//Empty comment - remove this
-
-
 class App extends React.Component {
   state = {
     items: [],
@@ -12,11 +9,14 @@ class App extends React.Component {
     perpage: 50,
     totalPages: 1,
     currentPage: 1,
-    totalItems: 50
+    totalItems: 50,
+    objectList: [],
+    filters: ''
   }
 
   componentDidMount() {
     this.loadPage();
+    this.loadStats();
   }   
 
   componentDidUpdate() {
@@ -28,11 +28,26 @@ class App extends React.Component {
     if(datetime){
     var input = datetime.trim() + "Z";
     var date = new Date(input);
-    var datestring = (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear() + " " + date.getHours() + ":" + date.getMinutes(); 
+    var minutes = date.getMinutes(); 
+    var hours = date.getHours();
+    if(minutes < 10){
+      minutes = "0" + minutes;  
+    }
+    if(hours < 10){
+      hours = "0" + hours;
+    }
+
+
+    var datestring = (date.getMonth() + 1) + "-" + date.getDate() + "-" + date.getFullYear() + " " + hours + ":" + minutes; 
     return(datestring)
   }
   }
 
+  loadStats(){
+    fetch(config.api + "/stats").then((response) => response.json()).then((responseJson) => {
+      this.setState({objectList: responseJson.result[0]['objects']})    
+    })
+  }
 
   loadPage(){
     const params = new URLSearchParams(window.location.search);
@@ -40,7 +55,7 @@ class App extends React.Component {
     const perpage = parseInt(params.get('perpage')) || 50;
     if (page !== this.state.page){
 
-    fetch(config.api + "?page=" + page + "&perpage=" + perpage)
+    fetch(config.api + "?page=" + page + "&perpage=" + perpage + "&filter=" + this.state.filters)
     .then((response) => response.json())
     .then((responseJson) => {
       this.setState({items: responseJson.items, totalPages: (responseJson.count / this.state.perpage), 
@@ -49,7 +64,7 @@ class App extends React.Component {
       .catch((error) => {
       console.error(error);
     }); 
-    
+   
   }
   }
 
@@ -60,30 +75,8 @@ class App extends React.Component {
     this.setState({
       page: this.page
     })
-    this.getData();
+
   }
-
-
-setPage(page){
-  this.setState({
-    page: this.state.page + 1
-  })
-}
-
-
-
-getData(){
-  fetch('http://gtn.sonoma.edu/api?page=' + this.state.page + "&perpage=" + this.state.perpage)
-   .then((response) => response.json())
-   .then((responseJson) => {
-     this.setState({items: responseJson.items, totalPages: (responseJson.count / this.state.perpage), 
-    totalItems: responseJson.count});
-   })
-     .catch((error) => {
-     console.error(error);
-   });
-}
-
 
   render() {
 
@@ -99,10 +92,16 @@ getData(){
     <div className="App">
       <h1 className="headertext">GORT Image Archive</h1>
         <p style={{color: 'white'}}>Count: {this.state.totalItems}<br /></p>
+        <select name="objectfilter">
+            <option value="" key="null">Object Filter</option>
+          {this.state.objectList.map(targets => (
+            <option value={targets} key={targets}>{targets}</option>
+          ))}
+          </select> 
         <div className="pagelinks">
         <ul>
           {pageNumbers.map(nums => (
-            <li key={nums}><a href={"./?page=" + nums + "&perpage=" + this.state.perpage} className="pagelink">{nums}</a></li> 
+            <li key={nums}><a href={"./?page=" + nums + "&perpage=" + this.state.perpage + "&filters=" + this.state.filters} className="pagelink">{nums}</a></li> 
           ))}  
           </ul>
         </div>
