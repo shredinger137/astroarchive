@@ -1,6 +1,9 @@
 import React from 'react';
 import './App.css';
 
+//Empty comment - remove this
+
+
 class App extends React.Component {
   state = {
     items: [],
@@ -54,6 +57,8 @@ setPage(page){
     page: this.state.page + 1
   })
 }
+
+
 
 getData(){
   fetch('http://gtn.sonoma.edu/api?page=' + this.state.page + "&perpage=" + this.state.perpage)
