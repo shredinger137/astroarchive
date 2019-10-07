@@ -56,7 +56,7 @@ setPage(page){
 }
 
 getData(){
-  fetch('http://localhost:3001?page=' + this.state.page + "&perpage=" + this.state.perpage)
+  fetch('http://gtn.sonoma.edu/api?page=' + this.state.page + "&perpage=" + this.state.perpage)
    .then((response) => response.json())
    .then((responseJson) => {
      this.setState({items: responseJson.items, totalPages: (responseJson.count / this.state.perpage), 
@@ -85,7 +85,7 @@ getData(){
         <div className="pagelinks">
         <ul>
           {pageNumbers.map(nums => (
-            <li><a href={"./?page=" + nums} className="pagelink">{nums}</a></li> 
+            <li><a href={"./?page=" + nums + "&perpage=" + this.state.perpage} className="pagelink">{nums}</a></li> 
           ))}  
           </ul>
         </div>
