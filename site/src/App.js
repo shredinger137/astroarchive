@@ -3,15 +3,20 @@ import './App.css';
 import { config } from './config.js';
 
 class App extends React.Component {
+  constructor(props){
+    super(props);
+    this.objectFilter = this.objectFilter.bind(this);
+  }
   state = {
     items: [],
     page: '',
-    perpage: 50,
+    perpage: 150,
     totalPages: 1,
     currentPage: 1,
     totalItems: 50,
     objectList: [],
-    filters: ''
+    filters: '',
+    objectFilter: ''
   }
 
   componentDidMount() {
@@ -55,7 +60,7 @@ class App extends React.Component {
     const perpage = parseInt(params.get('perpage')) || 50;
     if (page !== this.state.page){
 
-    fetch(config.api + "?page=" + page + "&perpage=" + perpage + "&filter=" + this.state.filters)
+    fetch(config.api + "?page=" + page + "&perpage=" + perpage + "&" + this.state.filters)
     .then((response) => response.json())
     .then((responseJson) => {
       this.setState({items: responseJson.items, totalPages: (responseJson.count / this.state.perpage), 
@@ -64,18 +69,26 @@ class App extends React.Component {
       .catch((error) => {
       console.error(error);
     }); 
-   
+    console.log(config.api + "?page=" + page + "&perpage=" + perpage + "&" + this.state.filters);
+    console.log(this.state.objectFilter);
   }
   }
 
   getParams() {
     var url = new URL(window.location);
     var page = url.searchParams.get('page');
-    console.log(page);
+
     this.setState({
       page: this.page
     })
 
+  }
+
+  objectFilter(event){
+    this.setState({
+      objectFilter: event.target.value,
+      filters: "object=" + event.target.value
+    })
   }
 
   render() {
@@ -92,8 +105,8 @@ class App extends React.Component {
     <div className="App">
       <h1 className="headertext">GORT Image Archive</h1>
         <p style={{color: 'white'}}>Image Count: {this.state.totalItems}<br /></p>
-        <select name="objectfilter">
-            <option value="" key="null">Object Filter (Off)</option>
+        <select name="objectfilter" onChange={this.objectFilter} value={this.state.objectFilter}>
+            <option value="" key="null" value="">All Objects</option>
           {this.state.objectList.map(targets => (
             <option value={targets} key={targets}>{targets}</option>
           ))}
@@ -101,7 +114,7 @@ class App extends React.Component {
         <div className="pagelinks">
         <ul>
           {pageNumbers.map(nums => (
-            <li key={nums}><a href={"./?page=" + nums + "&perpage=" + this.state.perpage + "&filters=" + this.state.filters} className="pagelink">{nums}</a></li> 
+            <li key={nums}><a href={"./?page=" + nums + "&perpage=" + this.state.perpage + "&" + this.state.filters} className="pagelink">{nums}</a></li> 
           ))}  
           </ul>
         </div>

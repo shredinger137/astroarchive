@@ -27,6 +27,7 @@ app.get('/', function(req, res){
   var page = 0;
   var perpage = 10000;
   res.statusCode = 200;
+  var query = {};
   res.setHeader('Content-Type', 'text/plain');
   res.setHeader('Access-Control-Allow-Origin', '*');
   if(req.query.page){
@@ -35,11 +36,14 @@ app.get('/', function(req, res){
         perpage = parseInt(req.query.perpage);
       }
   }
+  if(req.query.object){
+    var query = {OBJECT: req.query.object};
+  }
  
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
-    dbo.collection("gortarchive").find({},{ projection: {
+    dbo.collection("gortarchive").find(query,{ projection: {
       _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1, CCDTEMP: 1, OBSERVER: 1
     }}).sort( {DATEOBS: -1} ).skip(page * perpage).limit(perpage).toArray(function(err, result) {
       if (err) {
@@ -84,19 +88,22 @@ app.get('/stats', function(req, res){
 app.listen(3001)
 
 function addFile(filename, properties){
-  if(filename.indexOf('Dark') > 0 || filename.indexOf('Bias') > 0){}
-  else {
+  if(filename.indexOf('Dark') > 0 || filename.indexOf('Bias') > 0){
+    properties['OBJECT'] = "Calibration";
+  }
+  
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
     properties['filename'] = filename;
+    
     dbo.collection("gortarchive").insertOne(properties, function(err, res) {
       if (err) throw err;
       console.log("1 document inserted, " + filename);
       db.close();
     });
   });
-}
+
 }
 
 function deleteEntry(filename){
@@ -134,20 +141,22 @@ async function readHeader(filename, readable) {
    }
   for(var i=0; i < headerArr.length; i++){
    headerArr[i] = headerArr[i].replace(/\s\s+/g, ' ');
-   headerArr[i] = headerArr[i].replace(/\/.*/, '');
+   headerArr[i] = headerArr[i].replace(/\/.*/g, '').trim();
    headerArr[i] = headerArr[i].split(regex2);
    headerArr[i][0] = headerArr[i][0].replace(/\.*\s*\-*/g,'');
-   headerArr[i][0] = headerArr[i][0].replace(/-/, '');
-   headerArr[i][0] = headerArr[i][0].replace(/\s/, '');
+   headerArr[i][0] = headerArr[i][0].replace(/-/g, '');
+   headerArr[i][0] = headerArr[i][0].replace(/\s/g, '').trim();
    if (!headerArr[i][1]){
      headerArr.splice(i,1);
+   } else {
+     headerArr[i][1] = headerArr[i][1].replace(/^\s+|\s+$/gm,'');
    }
 }
   var headerobjtemp = {};
   for (var i=0, iLen=headerArr.length; i<iLen; i++) {
-    if (headerArr[i][1].indexOf(/[a-zA-Z]\s*'/)){
-       headerArr[i][1] = headerArr[i][1].replace(/'/g, '');
-    }
+    headerArr[i][1] = headerArr[i][1].replace(/(?<=[a-zA-Z])'/gm, '').trim();
+    headerArr[i][1] = headerArr[i][1].replace(/\s*'/gm, '').trim();
+    
     headerobjtemp[headerArr[i][0]] = headerArr[i][1];
   }
   headerobj = headerobjtemp;
@@ -156,8 +165,6 @@ async function readHeader(filename, readable) {
   return headerobj;
 }
 
-function parseHeader(rawHeaderText){
-}
 
   function getFiles(dir, done) {
     var results = [];
@@ -174,11 +181,9 @@ function parseHeader(rawHeaderText){
               if (!--pending) done(null, results);
             });
           } else {
-            if (file.indexOf("fts")){
-              results.push(file);
+             results.push(file);
               if (!--pending) done(null, results);
             }
-          }
         });
       });
     });
@@ -217,7 +222,8 @@ function syncEntries(entries){
     for(var i=0; i<files.length; i++){
       if(!entries.includes(files[i]))
         {
-          toAdd.push(files[i]); 
+          if(files[i].indexOf('fts') > -1){
+          toAdd.push(files[i]); }
         }
     }
     for(var i=0; i<entries.length; i++){
@@ -242,7 +248,6 @@ function makeStats(entries){
   {
     objects.push(entries[i]['OBJECT']);
   }
-  console.log(objects);
   for(var i=0; i<objects.length;i++){
     if(objects[i] && objects_clean.indexOf(objects[i]) < 0){
       objects_clean.push(objects[i])
