@@ -8,6 +8,7 @@ class App extends React.Component {
     super(props);
     this.objectFilter = this.objectFilter.bind(this);
     this.setDay = this.setDay.bind(this);
+    this.resetDate = this.resetDate.bind(this);
   }
   state = {
     items: [],
@@ -28,11 +29,22 @@ class App extends React.Component {
     this.loadParams();
     this.loadPage();
     this.loadStats();
-
+    this.loadedLog();
+    
   }  
 
-  componentDidUpdate() {
+  componentDidUpdate(previous) {
     this.loadPage();
+    this.updateLog();
+    console.log(previous);
+  }
+
+  loadedLog(){
+    console.log("Loaded");
+  }
+
+  updateLog(){
+    console.log("Updated");
   }
 
   dateConvert1(datetime)
@@ -60,7 +72,7 @@ class App extends React.Component {
 
   loadParams(){
     const params = new URLSearchParams(window.location.search);
-    if(params.get('object').length > 1){
+    if(params.get('object') && params.get('object').length > 1){
       this.setState({
         objectFilter: params.get('object')
       })
@@ -74,34 +86,44 @@ class App extends React.Component {
       currentPage: 1
     })
     }
+    if(params.get('dateFrom')){
+      this.setState({
+        dateFrom: params.get('dateFrom')
+      })
+    }
+    if(params.get('dateTo')){
+      this.setState({
+        dateFrom: params.get('dateTo')
+      })
+    }
   }
 
   loadPage(){
     const params = new URLSearchParams(window.location.search);
-    const page = parseInt(params.get('page')) || 1;
     const perpage = parseInt(params.get('perpage')) || 50;
-    
-   // if (page !== this.state.page){
-
-    fetch(config.api + "?page=" + this.state.currentPage + "&perpage=" + perpage + "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo)
+    var fetchUrl = config.api + "?page=" + this.state.currentPage + "&perpage=" + perpage + "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo;
+     fetch(fetchUrl)
     .then((response) => response.json())
     .then((responseJson) => {
       this.setState({items: responseJson.items, totalPages: (Math.round(responseJson.count / this.state.perpage)), 
      totalItems: responseJson.count});
+     console.log("Fetched: " + fetchUrl);
     })
       .catch((error) => {
       console.error(error);
     }); 
-    console.log(config.api + "?page=" + page + "&perpage=" + perpage + "&" + this.state.filters + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo);
-  
-    console.log(this.state);
-  }
+   }
 
 
   objectFilter(event){
     this.setState({
       objectFilter: event.target.value,
     })
+    if(event.target.value){
+      this.setState({
+        currentPage: 1
+      })
+    }
   }
 
   setDay(day){
@@ -130,6 +152,14 @@ class App extends React.Component {
     ))
   }
 
+  resetDate(){
+    this.setState({
+      dateFrom: "",
+      dateTo: ""
+    })
+    document.getElementById('date2').value = '';
+    document.getElementById('date1').value = '';
+  }
 
   render() {
 
@@ -148,14 +178,15 @@ class App extends React.Component {
         <p style={{color: 'white'}}>Image Count: {this.state.totalItems}<br /></p>
         <p>Object Selection: 
         <select name="objectfilter" onChange={this.objectFilter} value={this.state.objectFilter}>
-            <option value="" key="null" value="">All Objects</option>
+            <option value="" key="null">All Objects</option>
           {this.state.objectList.map(targets => (
             <option value={targets} key={targets}>{targets}</option>
           ))}
           </select> 
           </p>
           <p>Date Filter:
-          <input type="date" name="dateFrom" onChange={this.setDay}></input> to <input name="dateTo" type="date" onChange={this.setDay}></input></p>
+          <input type="date" id="date1" name="dateFrom" onChange={this.setDay}></input> to <input name="dateTo" id="date2" type="date" onChange={this.setDay}></input>
+          <a value="reset" id="resetDate" className="pagelink" href="#" onClick={this.resetDate}>Reset</a></p>
           </div>
         <div className="pagelinks">
         <ul>
