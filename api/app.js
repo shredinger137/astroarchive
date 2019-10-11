@@ -16,11 +16,14 @@ var app = express();
 var cron = require('node-cron');
 var page = 0;
 var count = 50;
+var query = {};
 
 cron.schedule('* 5 * * *', () => {
  getEntries();
 });
-
+//AAAAAH
+//TODO: Turn filters into an encoded object. Include pages. Pass it in URI from frontend.
+//GENERALIZE AND SHIT.
 
 app.get('/', function(req, res){
   var data = [];
@@ -36,15 +39,27 @@ app.get('/', function(req, res){
         perpage = parseInt(req.query.perpage);
       }
   }
-  if(req.query.object){
-    var query = {OBJECT: req.query.object};
+  
+  if(req.query.dateFrom && req.query.dateTo){
+    query['DATEOBS'] = {$gte: +req.query.dateFrom, $lte: +req.query.dateTo};
+  } else {
+    if(req.query.dateFrom){
+      query['DATEOBS'] = {$gte: +req.query.dateFrom};
+    }
+    if(req.query.dateTo){
+      query['DATEOBS'] = {$lte: +req.query.dateTo};
+    }
   }
- 
+
+  if(req.query.object){
+    query['OBJECT'] = req.query.object;
+  }
+
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
     dbo.collection("gortarchive").find(query,{ projection: {
-      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, TEMPERAT: 1, CCDTEMP: 1, OBSERVER: 1
+      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, CCDTEMP: 1, OBSERVER: 1, EXPTIME: 1
     }}).sort( {DATEOBS: -1} ).skip(page * perpage).limit(perpage).toArray(function(err, result) {
       if (err) {
         throw err
@@ -52,7 +67,7 @@ app.get('/', function(req, res){
 
       if (result) {
         data.push(result);
-        dbo.collection("gortarchive").find({},{}).count(function(err, countres) {
+        dbo.collection("gortarchive").find(query,{}).count(function(err, countres) {
           if (err) {
             throw err
           }
@@ -85,11 +100,14 @@ app.get('/stats', function(req, res){
   });
 });
 
-app.listen(3001)
+
 
 function addFile(filename, properties){
-  if(filename.indexOf('Dark') > 0 || filename.indexOf('Bias') > 0){
-    properties['OBJECT'] = "Calibration";
+  if(filename.indexOf('Dark') > 0){
+    properties['OBJECT'] = "Calibration/Dark";
+  }
+  if(filename.indexOf('Bias') > 0){
+    properties['OBJECT'] = "Calibration/Bias";
   }
   
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
@@ -113,7 +131,6 @@ function deleteEntry(filename){
     var myquery = { filename: filename};
     dbo.collection("gortarchive").deleteOne(myquery, function(err, obj) {
       if (err) throw err;
-      console.log("1 document deleted, " + filename);
       db.close();
     });
   });
@@ -122,6 +139,12 @@ function deleteEntry(filename){
 function callAdd(filename){
   readHeader(filename, fs.createReadStream(filename, {start: 0, end: 23040})).catch(err => console.error(err));
 }
+
+
+//This is kind of an important function. Here we parse the header, create the object
+//and otherwise prep it to be added to the database. A bunch of string cleaning and
+//conversions happen along the way. This will remove descriptions and only
+//retain key/value pairs.
 
 async function readHeader(filename, readable) {
   readable.setEncoding('utf8');
@@ -132,8 +155,8 @@ async function readHeader(filename, readable) {
   var rawHeaderText = data;
   var endTag = data.indexOf("END") + 3;
   rawHeaderText = rawHeaderText.substr(0, endTag);
-  var regex1 = RegExp('.{80}','g');
-  var regex2 = RegExp('\s*=\s*');
+  var regex1 = RegExp('.{80}','g'); //FTS files have 80 byte lines, so we split by lines first
+  var regex2 = RegExp('\s*=\s*');  //Our files have something = something on each relevant line, so we split that
   var headerArr = [];
   var array1;
   while ((array1 = regex1.exec(rawHeaderText)) !== null) {
@@ -143,24 +166,31 @@ async function readHeader(filename, readable) {
    headerArr[i] = headerArr[i].replace(/\s\s+/g, ' ');
    headerArr[i] = headerArr[i].replace(/\/.*/g, '').trim();
    headerArr[i] = headerArr[i].split(regex2);
-   headerArr[i][0] = headerArr[i][0].replace(/\.*\s*\-*/g,'');
-   headerArr[i][0] = headerArr[i][0].replace(/-/g, '');
+   headerArr[i][0] = headerArr[i][0].replace(/\.*\s*\-*/g,''); 
+   headerArr[i][0] = headerArr[i][0].replace(/-/g, ''); //dashes in keys will break queries
    headerArr[i][0] = headerArr[i][0].replace(/\s/g, '').trim();
-   if (!headerArr[i][1]){
+   
+   if (!headerArr[i][1]){ //this conditional eliminates descriptors without values, which some software adds in
      headerArr.splice(i,1);
    } else {
      headerArr[i][1] = headerArr[i][1].replace(/^\s+|\s+$/gm,'');
+     headerArr[i][1] = headerArr[i][1].replace(/\s*'/gm, '').trim();
    }
+
+   if(headerArr[i][0].indexOf("DATE") > -1){
+    var timestamp = new Date(headerArr[i][1] + "Z");
+    headerArr[i][1] = (timestamp.getTime());
+  }
 }
   var headerobjtemp = {};
+
+  //Below, we need to convert our two dimensional array into an object MongoDB can understand
   for (var i=0, iLen=headerArr.length; i<iLen; i++) {
-    headerArr[i][1] = headerArr[i][1].replace(/(?<=[a-zA-Z])'/gm, '').trim();
-    headerArr[i][1] = headerArr[i][1].replace(/\s*'/gm, '').trim();
-    
-    headerobjtemp[headerArr[i][0]] = headerArr[i][1];
+    if(headerArr[i][0] && headerArr[i][1]){    
+    headerobjtemp[headerArr[i][0]] = headerArr[i][1]; }
   }
   headerobj = headerobjtemp;
-  if(headerobj['filename'] != ""){
+  if(headerobj['filename'] != ""){ 
   addFile(filename, headerobj); }
   return headerobj;
 }
@@ -200,7 +230,6 @@ async function readHeader(filename, readable) {
         {
           tempresult.push(result[i]['filename']);
         }
-        //result = tempresult;
         if (err) throw err;
         db.close();
         syncEntries(tempresult);
@@ -233,7 +262,7 @@ function syncEntries(entries){
         }
     }
     for(var i=0; i<toAdd.length; i++){
-       callAdd(toAdd[i]);
+      callAdd(toAdd[i]);
     }
     for(var i=0; i<toDelete.length; i++){
       deleteEntry(toDelete[i]);
@@ -269,4 +298,5 @@ function makeStats(entries){
 );
   }
 
-getEntries();
+getEntries();  //Sync database on app restart. Pretty convenient to have here.
+app.listen(3001)

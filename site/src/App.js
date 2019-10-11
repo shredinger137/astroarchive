@@ -115,7 +115,7 @@ class App extends React.Component {
 
   renderPageNumbers(pageNumbers){
     var linkString = "&perPage=" + this.state.perpage;
-    if(this.state.objectFilter.length > 1){
+    if(this.state.objectFilter && this.state.objectFilter.length > 1){
       linkString = linkString + "&object=" + encodeURIComponent(this.state.objectFilter);
     }
     if(this.state.dateFrom.length > 5){
