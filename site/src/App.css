@@ -64,6 +64,10 @@ tr:nth-child(odd){
  background-color: #DDDDDD;
 } 
 
+tr:hover{
+  background-color: #D19EC7
+}
+
 td {
   padding: 10px;
 }
