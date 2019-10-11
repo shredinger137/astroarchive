@@ -14,7 +14,17 @@ body {
   text-align: center;
 }
 
+.daypicker{
+  position: fixed;
+}
 
+p{
+  color: white;
+}
+
+select, input {
+  margin: 10px;
+}
 li {
   display: inline-block;
   color: white;
