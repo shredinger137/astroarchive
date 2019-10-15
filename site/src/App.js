@@ -126,19 +126,16 @@ class App extends React.Component {
   }
 
   renderPageNumbers(pageNumbers){
-    var linkString = "&perPage=" + this.state.perpage;
-    if(this.state.objectFilter && this.state.objectFilter.length > 1){
-      linkString = linkString + "&object=" + encodeURIComponent(this.state.objectFilter);
-    }
-    if(this.state.dateFrom.length > 5){
-      linkString = linkString + "&dateFrom=" + this.state.dateFrom;
-    }
-    if(this.state.dateTo.length > 5){
-      linkString = linkString + "&dateTo=" + this.state.dateTo;
-    }
-
+    var linkString = "&perPage=" + this.state.perpage 
+      + "&object=" + this.state.objectFilter
+      + "&dateFrom=" + this.state.dateFrom 
+      + "&dateTo=" + this.state.dateTo;
+    
     return pageNumbers.map(nums => (
-      <li key={nums}><a href={"./?page=" + nums + linkString} className="pagelink">{nums}</a></li> 
+       
+      <li key={nums}><a href={"./?page=" + nums + linkString} className=
+        {nums == this.state.currentPage ? "pagecurrent" : "pagelink"}  
+      >{nums}</a></li> 
     ))
   }
 

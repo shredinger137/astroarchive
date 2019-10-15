@@ -7,6 +7,13 @@ body {
   text-decoration: none;  
 }
 
+.pagecurrent{
+  color: gray;
+  text-decoration: none;
+  font-weight: bold;
+
+}
+
 .pagelinks {
   margin: auto;
   width: 70vw;
