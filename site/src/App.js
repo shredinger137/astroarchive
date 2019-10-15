@@ -12,7 +12,7 @@ class App extends React.Component {
   }
   state = {
     items: [],
-    page: '',
+    page: 1,
     perpage: 150,
     totalPages: 1,
     currentPage: 1,
@@ -29,22 +29,17 @@ class App extends React.Component {
     this.loadParams();
     this.loadPage();
     this.loadStats();
-    this.loadedLog();
     
   }  
 
-  componentDidUpdate(previous) {
+  componentDidUpdate(prevProps, prevState) {
+    if(prevState.currentPage !== this.state.currentPage 
+      || prevState.objectFilter !== this.state.objectFilter
+      || prevState.dateFrom !== this.state.dateFrom
+      || prevState.dateTo !== this.state.dateTo){
     this.loadPage();
-    this.updateLog();
-    console.log(previous);
-  }
 
-  loadedLog(){
-    console.log("Loaded");
   }
-
-  updateLog(){
-    console.log("Updated");
   }
 
   dateConvert1(datetime)
@@ -72,26 +67,22 @@ class App extends React.Component {
 
   loadParams(){
     const params = new URLSearchParams(window.location.search);
-    if(params.get('object') && params.get('object').length > 1){
+    if(params.get('object') && params.get('object') !== this.state.objectFilter){
       this.setState({
-        objectFilter: params.get('object')
+        objectFilter: params.get('object') 
       })
     }
-    if(params.get('page')){
+    if(params.get('page') && params.get('page') !== this.state.currentPage){
       this.setState({
         currentPage: params.get('page')
       })
-    } else {
-      this.setState({
-      currentPage: 1
-    })
-    }
-    if(params.get('dateFrom')){
+    } 
+    if(params.get('dateFrom') && params.get('dateFrom') !== this.state.dateFrom){
       this.setState({
         dateFrom: params.get('dateFrom')
       })
     }
-    if(params.get('dateTo')){
+    if(params.get('dateTo') && params.get('dateTo') !== this.state.dateTo){
       this.setState({
         dateFrom: params.get('dateTo')
       })
@@ -99,8 +90,7 @@ class App extends React.Component {
   }
 
   loadPage(){
-    const params = new URLSearchParams(window.location.search);
-    const perpage = parseInt(params.get('perpage')) || 50;
+    const perpage = 150;
     var fetchUrl = config.api + "?page=" + this.state.currentPage + "&perpage=" + perpage + "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo;
      fetch(fetchUrl)
     .then((response) => response.json())
