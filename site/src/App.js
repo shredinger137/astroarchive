@@ -103,8 +103,8 @@ class App extends React.Component {
       currentPage: urlValues['currentPage'],
       dateFrom: urlValues['dateFrom'],
       dateTo: urlValues['dateTo']
-    })
-    this.loadPage();
+    }, () => { this.loadPage(); })
+    //this.loadPage();
 
   }
 
@@ -117,7 +117,7 @@ class App extends React.Component {
       this.setState({items: responseJson.items, totalPages: (Math.round(responseJson.count / this.state.perpage)), 
      totalItems: responseJson.count});
      console.log("Fetched: " + fetchUrl);
-     if(this.state.totalPages > this.state.currentPage){
+     if(this.state.totalPages < this.state.currentPage){
        this.setState({currentPage: 1});
      }
     })
@@ -162,8 +162,7 @@ class App extends React.Component {
     this.setState({
       [day.target.name]: Date.parse(date),
       [stringName]: day.target.value
-    })
-  
+    })  
   }
 
   renderPageNumbers(pageNumbers){
@@ -222,7 +221,7 @@ class App extends React.Component {
           </select> 
           </p>
           <p>Date Filter:
-          <input type="date" name="dateFrom" onChange={this.setDay} id="datefield1" value={this.state.dateFromstring} max={this.state.dateTo}></input> to 
+          <input type="date" name="dateFrom" onChange={this.setDay} id="datefield1" value={this.state.dateFromstring}></input> to 
           <input type="date" name="dateTo" onChange={this.setDay} id="datefield2"></input>
           <a value="reset" id="resetDate" className="pagelink" href="#" onClick={this.resetDate}>Reset</a></p>
           </div>
