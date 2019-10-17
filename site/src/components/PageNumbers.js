@@ -4,23 +4,13 @@ import '../App.css';
 
 
 export default class PageNumbers extends React.Component {
-    renderPageNumbers(pageNumbers){
-      var linkString = "&perPage=" + this.props.perpage 
-      + "&object=" + this.props.object
-      + "&dateFrom=" + this.props.dateFrom 
-      + "&dateTo=" + this.props.dateTo;
-
-    return pageNumbers.map(nums => (
-      <li key={nums}><a href={"./?page=" + nums + linkString} className="pagelink">{nums}</a></li> 
-    ))
-  }
     
     render() {
-      var linkString = "&perPage=" + this.props.perpage 
+      var linkString = "&perPage=" + this.props.perPage 
       + "&object=" + this.props.object
       + "&dateFrom=" + this.props.dateFrom 
       + "&dateTo=" + this.props.dateTo;
-      
+      console.log("Page in pages: " + this.props.currentPage);
       var pageNumbers = [];
       if (this.props.totalPages !== null) {
         for (let i = 1; i <= this.props.totalPages; i++) {
@@ -31,7 +21,7 @@ export default class PageNumbers extends React.Component {
         return(
             pageNumbers.map(nums => (
                 <li key={nums}><a href={"./?page=" + nums + linkString} className=
-                {nums === this.props.currentPage ? "pagecurrent" : "pagelink"}  
+                {nums == this.props.currentPage ? "pagecurrent" : "pagelink"}  
               >{nums}</a></li>  
 
 
