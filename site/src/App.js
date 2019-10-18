@@ -109,7 +109,7 @@ class App extends React.Component {
   }
 
   loadPage(){
-    console.log("Test verification");
+    console.log("Test verification 2");
     const perpage = 150;
     var fetchUrl = config.api + "?page=" + this.state.currentPage + "&perpage=" + perpage + "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo;
      fetch(fetchUrl)
