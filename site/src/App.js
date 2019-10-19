@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import { config } from './config.js';
 import PageNumbers from './components/PageNumbers.js'
-
+import Example from './components/DateExample.js';
 
 class App extends React.Component {
   constructor(props){
@@ -11,6 +11,8 @@ class App extends React.Component {
     this.setDay = this.setDay.bind(this);
     this.resetDate = this.resetDate.bind(this);
     this.setPage = this.setPage.bind(this);
+    this.setDay2 = this.setDay2.bind(this);
+    this.resetAll = this.resetAll.bind(this);
   }
   state = {
     items: [],
@@ -21,7 +23,7 @@ class App extends React.Component {
     totalItems: 50,
     objectList: [],
     filters: '',
-    objectFilter: '',
+    objectFilter: "",
     day: '',
     dateFrom: '',
     dateTo: '',
@@ -138,8 +140,8 @@ class App extends React.Component {
         mm='0'+mm
     } 
     today = yyyy+'-'+mm+'-'+dd;
-    document.getElementById("datefield1").setAttribute("max", today);
-    document.getElementById("datefield2").setAttribute("max", today);
+//    document.getElementById("datefield1").setAttribute("max", today);
+ //   document.getElementById("datefield2").setAttribute("max", today);
   }
 
 
@@ -166,22 +168,18 @@ class App extends React.Component {
     })  
   }
 
-  renderPageNumbers(pageNumbers){
-    var linkString = "&perPage=" + this.state.perpage 
-      + "&object=" + this.state.objectFilter
-      + "&dateFrom=" + this.state.dateFrom 
-      + "&dateTo=" + this.state.dateTo;
-    
-    //  TODO: Replace with React Router or similar history modification plugin
-    //  change URL to reflect state, don't reload everything
-
-    return pageNumbers.map(nums => (
-       
-      <li key={nums}><a href={"./?page=" + nums + linkString} className=
-        {nums === this.state.currentPage ? "pagecurrent" : "pagelink"}  
-      >{nums}</a></li> 
-    ))
+  setDay2(day, name){
+    console.log(day);
+    console.log(name);
+    var date = new Date(day);
+    var stringName = name + "string";
+    this.setState({
+      [name]: Date.parse(date),
+      [stringName]: day
+      
+    })
   }
+
 
   setPage(page){
     this.setState({
@@ -198,34 +196,58 @@ class App extends React.Component {
     })
   }
 
+  resetAll(){
+    this.setState({
+      dateFrom: "",
+      dateTo: "",
+      dateFromstring: "",
+      dateTostring: '',
+      objectFilter: ""
+
+    })
+  }
+
+  openDownload(linkString){
+    var download = config.files + "/downloadAll?null=null" + linkString;
+    window.open(download);
+  }
+
   render() {
 
-    var pageNumbers = [];
-    if (this.state.totalPages !== null) {
-      for (let i = 1; i <= this.state.totalPages; i++) {
-        pageNumbers.push(i);
-      }
-    }
+    var linkString = "&perPage=" + this.state.perpage;
+      if(this.state.objectFilter){linkString = linkString + "&object=" + this.state.objectFilter;} 
+      if(this.state.dateFrom){linkString = linkString + "&dateFrom=" + this.state.dateFrom;} 
+      if(this.state.dateTo){linkString = linkString + "&dateTo=" + this.state.dateTo;}
 
    
   return (
     <div className="App">
       <h1 className="headertext">GORT Image Archive</h1>
+      <p style={{color: 'white'}}>Image Count: {this.state.totalItems}<br /></p>
         <div className="filters">
-        <p style={{color: 'white'}}>Image Count: {this.state.totalItems}<br /></p>
-        <p>Object Selection: 
+        
+        <label>Object Selection: </label>
+        
         <select name="objectfilter" onChange={this.objectFilter} value={this.state.objectFilter}>
             <option value="" key="null">All Objects</option>
           {this.state.objectList.map(targets => (
             <option value={targets} key={targets}>{targets}</option>
           ))}
           </select> 
-          </p>
-          <p>Date Filter:
-          <input type="date" name="dateFrom" onChange={this.setDay} id="datefield1" value={this.state.dateFromstring}></input> to 
-          <input type="date" name="dateTo" onChange={this.setDay} id="datefield2"></input>
-          <a value="reset" id="resetDate" className="pagelink" href="#" onClick={this.resetDate}>Reset</a></p>
+          
+
+          <Example name="dateFrom"
+                    setDay = {this.setDay2}
+                    dateCurrent = {this.state.dateFromstring}/>
+
+             <Example name="dateTo"
+                    setDay = {this.setDay2}
+                    dateCurrent = {this.state.dateTostring}/>
+          <button value="reset" id="resetDate" className="pagelink" onClick={this.resetDate}>Reset Dates</button>
+          <button value="resetAll" id="resetAll" className="pagelink" onClick={this.resetAll}>Reset All</button>
+          <button value="dl" id="dl" className="pagelink" onClick={() => this.openDownload(linkString)}>Download Results</button>
           </div>
+         
         <div className="pagelinks">
         <ul>
           <PageNumbers 
@@ -236,6 +258,7 @@ class App extends React.Component {
               dateFrom = {this.state.dateFrom}
               dateTo = {this.state.dateTo}
               perPage = {this.state.perpage}
+              linkString = {linkString}
               />
           </ul>
         </div>

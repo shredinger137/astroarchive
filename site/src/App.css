@@ -14,6 +14,30 @@ body {
 
 }
 
+.filters {
+  border-radius: 11px;
+  border-style: solid;
+  width: 40vw;
+  margin: auto;
+  padding-bottom: 15px;
+  background-color: #300066;
+}
+
+button, .buttonlike {
+  background: none!important;
+  border: none;
+  padding: 2!important;
+  margin: 0px 5px 0px 5px;
+  /*optional*/
+  font-family: arial, sans-serif;
+  /*input has OS specific font-family*/
+  color: white;
+  text-decoration: underline;
+  cursor: pointer;
+  border-style: solid;
+  border-width: 1px;
+}
+
 .pagelinks {
   margin: auto;
   width: 70vw;
@@ -25,9 +49,10 @@ body {
   position: fixed;
 }
 
-p{
+p, .text, label{
   color: white;
 }
+
 
 select, input {
   margin: 10px;

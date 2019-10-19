@@ -20,7 +20,7 @@ export default class PageNumbers extends React.Component {
       
         return(
             pageNumbers.map(nums => (
-                <li key={nums}><a href={"./?page=" + nums + linkString} className=
+                <li key={nums}><a href={"./?page=" + nums + this.props.linkString} className=
                 {nums == this.props.currentPage ? "pagecurrent" : "pagelink"}  
               >{nums}</a></li>  
 
