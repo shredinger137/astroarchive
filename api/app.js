@@ -47,6 +47,9 @@ app.get('/', function(req, res){
     if(req.query.dateTo){
       query['DATEOBS'] = {$lte: +req.query.dateTo};
     }
+    if(req.query.user){
+      query['USER'] = req.query.user;
+    }
   }
 
   if(req.query.object){
@@ -57,7 +60,7 @@ app.get('/', function(req, res){
     if (err) throw err;
     var dbo = db.db("gortarchive");
     dbo.collection("gortarchive").find(query,{ projection: {
-      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, CCDTEMP: 1, OBSERVER: 1, EXPTIME: 1
+      _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, CCDTEMP: 1, USER: 1, EXPTIME: 1
     }}).sort( {DATEOBS: -1} ).skip(page * perpage).limit(perpage).toArray(function(err, result) {
       if (err) {
         throw err
@@ -98,6 +101,9 @@ app.get('/stats', function(req, res){
   });
 });
 
+//This has become a blocking function.
+//TODO: Async this or move to a separate instance.
+//use this same app for easy testing and demo.
 
 app.get('/downloadAll', function(req, res){
   var data = [];
@@ -161,6 +167,18 @@ function addFile(filename, properties){
     properties['OBJECT'] = "Calibration/Bias";
   }
   
+  //This part is specific to how we have directories set up. All captured images
+  //are under ./img/$USER/dates/file.fts, and things under ACP were captured directly
+  //from the telescope without using the scheduling software. The lines under here
+  //should be removed if you're using a header property instead, or changed for different
+  //organizational plans.
+
+  var user = filename.match(/(?<=img\\)([A-Za-z]*)(?=\\)/g);
+  if(user){properties['USER'] = user[0];}
+  if(properties['USER'] == 'ACP'){properties['USER'] = "GORT Staff"};
+
+
+
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
@@ -275,7 +293,7 @@ async function readHeader(filename, readable) {
     mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) { 
       if (err) throw err;
       var dbo = db.db("gortarchive");
-      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1, OBJECT: 1}}).toArray(function(err, result) {
+      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1, OBJECT: 1, USER: 1}}).toArray(function(err, result) {
         let tempresult = [];
         for(var i = 0; i < result.length; i++)
         {
@@ -302,7 +320,7 @@ function syncEntries(entries){
     for(var i=0; i<files.length; i++){
       if(!entries.includes(files[i]))
         {
-          if(files[i].indexOf('fts') > -1){
+          if(files[i].split('.').pop() == 'fts'){   //only .fts files can be indexed. Note that this breaks if names include '.' anywhere else.
           toAdd.push(files[i]); }
         }
     }
@@ -320,10 +338,19 @@ function syncEntries(entries){
     }});
 }
 
+//The makeStats function creates select statistics used both for reporting and for
+//setting up dropdown filters on the frontend. I think it's slightly more performant
+//than getting values dynamically, and since things don't change very quickly it works
+//for us. Note that this is called from getEntries(), so any stat items have to be
+//in the projection there.
+
 function makeStats(entries){
   var stats = {};
   var objects = [];
   var objects_clean = [];
+  var users = [];
+  var users_clean = [];
+
   for(var i=0; i<entries.length; i++)
   {
     objects.push(entries[i]['OBJECT']);
@@ -333,18 +360,38 @@ function makeStats(entries){
       objects_clean.push(objects[i])
     } 
   }
-  stats = {
-    'name': 'objects',
-    'objects': objects_clean 
+
+  for(var i=0; i<entries.length; i++)
+  {
+    users.push(entries[i]['USER']);
+  }
+  for(var i=0; i<users.length;i++){
+    if(users[i] && users_clean.indexOf(users[i]) < 0){
+      users_clean.push(users[i])
+    } 
+  }
+
+  statsObj = {
+    'name': 'lists',
+    'objects': objects_clean,
+    'users': users_clean
   };
+
+  statsUsers = {
+
+    'name': 'users',
+    'users': users_clean
+  }
+
   mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) {
     if (err) throw err;
     var dbo = db.db("gortarchive");
     dbo.collection("stats").replaceOne(
-      {"name" : "objects"},
-      stats,
+      {"name" : "lists"},
+      statsObj,
       {upsert: true}
     );
+
 }
 );
   }

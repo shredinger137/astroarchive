@@ -13,6 +13,7 @@ class App extends React.Component {
     this.setPage = this.setPage.bind(this);
     this.setDay2 = this.setDay2.bind(this);
     this.resetAll = this.resetAll.bind(this);
+    this.userFilter = this.userFilter.bind(this);
   }
   state = {
     items: [],
@@ -28,7 +29,9 @@ class App extends React.Component {
     dateFrom: '',
     dateTo: '',
     dateTostring: '',
-    dateFromstring: ''
+    dateFromstring: '',
+    userList: [],
+    userFilter: ""
   }
 
   componentDidMount() {
@@ -43,7 +46,8 @@ class App extends React.Component {
     if(prevState.currentPage !== this.state.currentPage 
       || prevState.objectFilter !== this.state.objectFilter
       || prevState.dateFrom !== this.state.dateFrom
-      || prevState.dateTo !== this.state.dateTo) {
+      || prevState.dateTo !== this.state.dateTo
+      || prevState.userFilter !== this.state.userFilter) {
         
         // TODO: update history after getting the new state
 
@@ -70,7 +74,7 @@ class App extends React.Component {
 
   loadStats(){
     fetch(config.api + "/stats").then((response) => response.json()).then((responseJson) => {
-      this.setState({objectList: responseJson.result[0]['objects']})    
+      this.setState({objectList: responseJson.result[0]['objects'], userList: responseJson.result[0]['users']})    
     })
   }
 
@@ -100,6 +104,11 @@ class App extends React.Component {
       urlValues['dateFrom'] = params.get('dateFrom');
     } else {urlValues['dateFrom'] = this.state.dateFrom;}
 
+    if(params.get('user') && params.get('user') !== this.state.userFilter){
+      urlValues['user'] = params.get('user');
+    } else {urlValues['user'] = this.state.userFilter;}
+
+
     this.setState({
       objectFilter: urlValues['object'],
       currentPage: urlValues['currentPage'],
@@ -111,9 +120,9 @@ class App extends React.Component {
   }
 
   loadPage(){
-    console.log("Test verification 2");
     const perpage = 150;
-    var fetchUrl = config.api + "?page=" + this.state.currentPage + "&perpage=" + perpage + "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo;
+    var fetchUrl = config.api + "?page=" + this.state.currentPage + "&perpage=" + perpage + 
+          "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo + "&user=" + this.state.userFilter;
      fetch(fetchUrl)
     .then((response) => response.json())
     .then((responseJson) => {
@@ -155,6 +164,18 @@ class App extends React.Component {
       })
     }
   }
+
+  userFilter(event){
+    this.setState({
+      userFilter: event.target.value,
+    })
+    if(event.target.value){
+      this.setState({
+        currentPage: 1
+      })
+    }
+  }
+
 
   setDay(day){
     var date = new Date(day.target.value);
@@ -202,7 +223,8 @@ class App extends React.Component {
       dateTo: "",
       dateFromstring: "",
       dateTostring: '',
-      objectFilter: ""
+      objectFilter: "",
+      userFilter: ""
 
     })
   }
@@ -218,6 +240,7 @@ class App extends React.Component {
       if(this.state.objectFilter){linkString = linkString + "&object=" + this.state.objectFilter;} 
       if(this.state.dateFrom){linkString = linkString + "&dateFrom=" + this.state.dateFrom;} 
       if(this.state.dateTo){linkString = linkString + "&dateTo=" + this.state.dateTo;}
+      if(this.state.userFilter){linkString = linkString + "&user=" + this.state.userFilter;}
 
    
   return (
@@ -243,9 +266,23 @@ class App extends React.Component {
              <Example name="dateTo"
                     setDay = {this.setDay2}
                     dateCurrent = {this.state.dateTostring}/>
+
+
+            
+          <label>User: </label>
+        
+        <select name="userfilter" onChange={this.userFilter} value={this.state.userFilter}>
+            <option value="" key="null">All Users</option>
+          {this.state.userList.map(targets => (
+            <option value={targets} key={targets}>{targets}</option>
+          ))}
+          </select> 
+            <br />
+
           <button value="reset" id="resetDate" className="pagelink" onClick={this.resetDate}>Reset Dates</button>
           <button value="resetAll" id="resetAll" className="pagelink" onClick={this.resetAll}>Reset All</button>
           <button value="dl" id="dl" className="pagelink" onClick={() => this.openDownload(linkString)}>Download Results</button>
+          
           </div>
          
         <div className="pagelinks">
@@ -273,7 +310,7 @@ class App extends React.Component {
             <th>CCD Temp (C)</th>
             <th>Filter</th>
             <th>Exposure Time (S)</th>
-            <th>Observer</th>
+            <th>User</th>
             </tr>
           </thead>
 
@@ -286,7 +323,7 @@ class App extends React.Component {
                   <td>{items.CCDTEMP ? items.CCDTEMP.substr(0,5) : ''}</td> 
               <td>{items.FILTER}</td>
               <td>{Math.round(items.EXPTIME * 10) / 10}</td>
-              <td>{items.OBSERVER}</td>
+              <td>{items.USER}</td>
             </tr>
         
             )
