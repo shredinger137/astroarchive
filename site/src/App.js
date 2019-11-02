@@ -114,7 +114,8 @@ class App extends React.Component {
       objectFilter: urlValues['object'],
       currentPage: urlValues['currentPage'],
       dateFrom: urlValues['dateFrom'],
-      dateTo: urlValues['dateTo']
+      dateTo: urlValues['dateTo'],
+      userFilter: urlValues['user']
     }, () => { this.loadPage(); })
     //this.loadPage();
 
