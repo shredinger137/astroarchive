@@ -105,7 +105,7 @@ function addFile(filename, properties){
   //should be removed if you're using a header property instead, or changed for different
   //organizational plans.
 
-  var user = filename.match(/(?<=img\\)([A-Za-z]*)(?=\\)/g);
+  var user = filename.match(/(?<=img\\|\/)([A-Za-z]*)(?=\\|\/)/g);
   if(user){properties['USER'] = user[0];}
   if(properties['USER'] == 'ACP'){properties['USER'] = "GORT Staff"};
 
