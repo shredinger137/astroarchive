@@ -85,7 +85,8 @@ class App extends React.Component {
                       object: params.get('object'),
                       currentPage: params.get('currentPage'),
                       dateFrom: params.get('dateFrom'),
-                      dateTo: params.get('dateTo')
+                      dateTo: params.get('dateTo'),
+                      user: params.get('user')
     };
 
     if(params.get('object') && params.get('object') !== this.state.objectFilter){
