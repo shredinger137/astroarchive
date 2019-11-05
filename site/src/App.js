@@ -14,6 +14,7 @@ class App extends React.Component {
     this.setDay2 = this.setDay2.bind(this);
     this.resetAll = this.resetAll.bind(this);
     this.userFilter = this.userFilter.bind(this);
+    this.filterFilter = this.filterFilter.bind(this);
   }
   state = {
     items: [],
@@ -31,7 +32,9 @@ class App extends React.Component {
     dateTostring: '',
     dateFromstring: '',
     userList: [],
-    userFilter: ""
+    userFilter: "",
+    filterList: [],
+    filterFilter: ""
   }
 
   componentDidMount() {
@@ -47,7 +50,8 @@ class App extends React.Component {
       || prevState.objectFilter !== this.state.objectFilter
       || prevState.dateFrom !== this.state.dateFrom
       || prevState.dateTo !== this.state.dateTo
-      || prevState.userFilter !== this.state.userFilter) {
+      || prevState.userFilter !== this.state.userFilter
+      || prevState.filterFilter !== this.state.filterFilter) {
         
         // TODO: update history after getting the new state
 
@@ -74,7 +78,7 @@ class App extends React.Component {
 
   loadStats(){
     fetch(config.api + "/stats").then((response) => response.json()).then((responseJson) => {
-      this.setState({objectList: responseJson.result[0]['objects'], userList: responseJson.result[0]['users']})    
+      this.setState({objectList: responseJson.result['0']['objects'], userList: responseJson.result[0]['users'], filterList: responseJson.result[0]['filters']})    
     })
   }
 
@@ -109,13 +113,17 @@ class App extends React.Component {
       urlValues['user'] = params.get('user');
     } else {urlValues['user'] = this.state.userFilter;}
 
+    if(params.get('filter') && params.get('filter') !== this.state.filterFilter){
+      urlValues['filter'] = params.get('filter');
+    } else {urlValues['filter'] = this.state.filterFilter;}
 
     this.setState({
       objectFilter: urlValues['object'],
       currentPage: urlValues['currentPage'],
       dateFrom: urlValues['dateFrom'],
       dateTo: urlValues['dateTo'],
-      userFilter: urlValues['user']
+      userFilter: urlValues['user'],
+      filterFilter: urlValues['filter']
     }, () => { this.loadPage(); })
     //this.loadPage();
 
@@ -124,7 +132,8 @@ class App extends React.Component {
   loadPage(){
     const perpage = 150;
     var fetchUrl = config.api + "?page=" + this.state.currentPage + "&perpage=" + perpage + 
-          "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo + "&user=" + this.state.userFilter;
+          "&object=" + encodeURIComponent(this.state.objectFilter) + "&dateFrom=" + this.state.dateFrom + "&dateTo=" + this.state.dateTo + 
+          "&user=" + this.state.userFilter + "&filter=" + this.state.filterFilter;
      fetch(fetchUrl)
     .then((response) => response.json())
     .then((responseJson) => {
@@ -178,6 +187,19 @@ class App extends React.Component {
     }
   }
 
+  
+  filterFilter(event){
+    this.setState({
+      filterFilter: event.target.value 
+    })
+    if(event.target.value){
+      this.setState({
+        currentPage: 1
+      })
+  }
+}
+
+
 
   setDay(day){
     var date = new Date(day.target.value);
@@ -226,7 +248,8 @@ class App extends React.Component {
       dateFromstring: "",
       dateTostring: '',
       objectFilter: "",
-      userFilter: ""
+      userFilter: "",
+      filterFilter: ""
 
     })
   }
@@ -243,6 +266,7 @@ class App extends React.Component {
       if(this.state.dateFrom){linkString = linkString + "&dateFrom=" + this.state.dateFrom;} 
       if(this.state.dateTo){linkString = linkString + "&dateTo=" + this.state.dateTo;}
       if(this.state.userFilter){linkString = linkString + "&user=" + this.state.userFilter;}
+      if(this.state.filterFilter){linkString = linkString + "&filter=" + this.state.filterFilter;}
 
    
   return (
@@ -269,7 +293,15 @@ class App extends React.Component {
                     setDay = {this.setDay2}
                     dateCurrent = {this.state.dateTostring}/>
 
-
+            <label>Filter: </label>
+        
+        <select name="filterFilter" onChange={this.filterFilter} value={this.state.filterFilter}>
+            <option value="" key="null">Any</option>
+          {this.state.filterList.map(targets => (
+            <option value={targets} key={targets}>{targets}</option>
+          ))}
+          </select> 
+            <br />
             
           <label>User: </label>
         

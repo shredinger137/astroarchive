@@ -39,6 +39,9 @@ app.get('/', function(req, res){
     if(req.query.user){
       query['USER'] = req.query.user;
     }
+    if(req.query.filter){
+      query['FILTER'] = req.query.filter;
+    }
   }
 
   if(req.query.object){
@@ -225,7 +228,7 @@ async function readHeader(filename, readable) {
     mongo.connect(mongourl, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, db) { 
       if (err) throw err;
       var dbo = db.db("gortarchive");
-      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1, OBJECT: 1, USER: 1}}).toArray(function(err, result) {
+      dbo.collection("gortarchive").find({},{ projection: {_id: 0, filename: 1, OBJECT: 1, USER: 1, FILTER: 1}}).toArray(function(err, result) {
         let tempresult = [];
         for(var i = 0; i < result.length; i++)
         {
@@ -276,12 +279,12 @@ function syncEntries(entries){
 //for us. Note that this is called from getEntries(), so any stat items have to be
 //in the projection there.
 
+
 function makeStats(entries){
   var stats = {};
   var objects = [];
   var objects_clean = [];
-  var users = [];
-  var users_clean = [];
+
 
   for(var i=0; i<entries.length; i++)
   {
@@ -293,6 +296,9 @@ function makeStats(entries){
     } 
   }
 
+
+  var users = [];
+  var users_clean = [];
   for(var i=0; i<entries.length; i++)
   {
     users.push(entries[i]['USER']);
@@ -303,10 +309,26 @@ function makeStats(entries){
     } 
   }
 
+
+  var filters = [];
+  var filters_clean = [];
+  for(var i=0; i<entries.length; i++)
+  {
+    filters.push(entries[i]['FILTER']);
+  }
+  for(var i=0; i<filters.length;i++){
+    if(filters[i] && filters_clean.indexOf(filters[i]) < 0){
+      filters_clean.push(filters[i])
+    } 
+  }
+
+
+
   statsObj = {
     'name': 'lists',
     'objects': objects_clean,
-    'users': users_clean
+    'users': users_clean,
+    'filters': filters_clean
   };
 
   statsUsers = {

@@ -6,11 +6,9 @@ import '../App.css';
 export default class PageNumbers extends React.Component {
     
     render() {
-      var linkString = "&perPage=" + this.props.perPage 
-      + "&object=" + this.props.object
-      + "&dateFrom=" + this.props.dateFrom 
-      + "&dateTo=" + this.props.dateTo;
+      var linkString = this.props.linkString;
       console.log("Page in pages: " + this.props.currentPage);
+      console.log("LinkString in pages:" + linkString);
       var pageNumbers = [];
       if (this.props.totalPages !== null) {
         for (let i = 1; i <= this.props.totalPages; i++) {
