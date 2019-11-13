@@ -315,7 +315,7 @@ class App extends React.Component {
 
           <button value="reset" id="resetDate" className="pagelink" onClick={this.resetDate}>Reset Dates</button>
           <button value="resetAll" id="resetAll" className="pagelink" onClick={this.resetAll}>Reset All</button>
-          <button value="dl" id="dl" className="pagelink" onClick={() => this.openDownload(linkString)}>Download Results</button>
+          
           
           </div>
          
