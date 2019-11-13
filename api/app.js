@@ -55,20 +55,23 @@ app.get('/', function(req, res){
       _id: 0, filename: 1, OBJECT: 1, FILTER: 1, DATEOBS: 1, AZIMUTH: 1, ALTITUDE: 1, CCDTEMP: 1, USER: 1, EXPTIME: 1
     }}).sort( {DATEOBS: -1} ).skip(page * perpage).limit(perpage).toArray(function(err, result) {
       if (err) {
-        throw err
+        console.log(err);
+      
       }
-
       if (result) {
-        data.push(result);
-        dbo.collection("gortarchive").find(query,{}).count(function(err, countres) {
-          if (err) {
-            throw err
-          }
-          if (countres) {
-            res.send({'count': countres, 'items': result});
-          }
-        }     
-        )};
+        if(result.length !== 0){
+          data.push(result);
+          dbo.collection("gortarchive").find(query,{}).count(function(err, countres) {
+            if (err) {
+            }
+            if (countres) {
+              res.send({'count': countres, 'items': result});
+            }
+          }     
+          )} 
+          else{res.send({'count': 0});}
+        } 
+        
     });
   });
 });
