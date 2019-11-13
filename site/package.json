@@ -2,7 +2,7 @@
   "name": "site",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://gtn.sonoma.edu/archive/build",
+  "homepage": "http://gtn.sonoma.edu/archive",
   "dependencies": {
     "react": "^16.9.0",
     "react-datepicker": "^2.9.6",
