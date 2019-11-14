@@ -2,7 +2,9 @@ import React from "react";
 import "./App.css";
 import { config } from "./config.js";
 import PageNumbers from "./components/PageNumbers.js";
-import Example from "./components/DateExample.js";
+import Dates from "./components/Dates.js";
+import moment from "moment";
+require('moment-timezone');
 
 class App extends React.Component {
   constructor(props) {
@@ -244,6 +246,7 @@ class App extends React.Component {
     console.log(Date.parse(date));
     console.log(stringName + ": " + date);
 
+
     this.setState({
       [day.target.name]: Date.parse(date),
       [stringName]: day.target.value
@@ -251,14 +254,27 @@ class App extends React.Component {
   }
 
   setDay2(day, name) {
+
+    //Breaking here, TODO dates
+    //newDate now has the proper UTC value. This is what you should use in your call.
+    //but local date still has to be the state that the form pulls off of - this bit is only
+    //for the fetch/url. So is this yet another state?
+    //Also, setDay2 is the only one we use. Delete setDay and rename this.
+
     console.log(day);
     console.log(name);
+    var timeZoneOffset = (new Date).getTimezoneOffset() * 60000;
     var date = new Date(day);
+    var newDate = Date.parse(date) - timeZoneOffset;
+    console.log("New: " + newDate);
+    var d = moment(day).tz('UTC');
+    console.log("Moment: " + d);
     var stringName = name + "string";
     this.setState({
       [name]: Date.parse(date),
       [stringName]: day
     });
+
   }
 
   setPage(page) {
@@ -319,7 +335,7 @@ class App extends React.Component {
           <br />
         </p>
         <div className="filters">
-          <label>Object Selection: </label>
+          <label for="objectFilter">Object Selection: </label>
 
           <select
             name="objectfilter"
@@ -336,19 +352,19 @@ class App extends React.Component {
             ))}
           </select>
 
-          <Example
+          <Dates
             name="dateFrom"
             setDay={this.setDay2}
             dateCurrent={this.state.dateFromstring}
           />
 
-          <Example
+          <Dates
             name="dateTo"
             setDay={this.setDay2}
             dateCurrent={this.state.dateTostring}
           />
 
-          <label>Filter: </label>
+          <label for="filterFilter">Filter: </label>
 
           <select
             name="filterFilter"

@@ -6,7 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 // CSS Modules, react-datepicker-cssmodules.css
 // import 'react-datepicker/dist/react-datepicker-cssmodules.css';
  
-export default class Example extends React.Component {
+export default class Dates extends React.Component {
   state = {
     startDate: new Date()
   };
@@ -18,9 +18,10 @@ export default class Example extends React.Component {
   render() {
     return (
     <div>
-         <span className="text">{this.props.name === "dateFrom" ? 'From: ' : 'To: '}</span>
+         <label for={this.props.name}>{this.props.name === "dateFrom" ? 'From: ' : 'To: '}</label>
     
       <DatePicker
+        maxDate={new Date()}
         selected={this.props.dateCurrent}
         onChange={this.handleChange}
       />
