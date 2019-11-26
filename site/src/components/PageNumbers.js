@@ -12,6 +12,7 @@ export default class PageNumbers extends React.Component {
       var pageNumbers = [];
       if (this.props.totalPages !== null) {
         for (let i = 1; i <= this.props.totalPages; i++) {
+
           pageNumbers.push(i);
           }
         }

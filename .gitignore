@@ -1,11 +1,13 @@
 config.*
 /img
 deploy.php
+*.zip
 
 # dependencies
 /site/node_modules
 .pnp
 .pnp.js
+*/node_modules/
 
 # testing
 /site/coverage
@@ -13,6 +15,7 @@ deploy.php
 # production
 /site/build
 build/
+
 
 # misc
 .DS_Store

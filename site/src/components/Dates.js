@@ -18,14 +18,13 @@ export default class Dates extends React.Component {
   render() {
     return (
     <div>
-         <label for={this.props.name}>{this.props.name === "dateFrom" ? 'From: ' : 'To: '}</label>
-    
+         <label htmlFor={this.props.name}>{this.props.name === "dateFrom" ? 'From: ' : 'To: '}</label>
+
       <DatePicker
         maxDate={new Date()}
-        selected={this.props.dateCurrent}
         onChange={this.handleChange}
       />
-      
+
       </div>
     );
   }

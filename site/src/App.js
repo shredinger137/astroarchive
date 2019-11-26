@@ -3,18 +3,15 @@ import "./App.css";
 import { config } from "./config.js";
 import PageNumbers from "./components/PageNumbers.js";
 import Dates from "./components/Dates.js";
-import moment from "moment";
-require('moment-timezone');
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.objectFilter = this.objectFilter.bind(this);
-    this.setDay = this.setDay.bind(this);
     this.resetDate = this.resetDate.bind(this);
     this.setPage = this.setPage.bind(this);
-    this.setDay2 = this.setDay2.bind(this);
     this.resetAll = this.resetAll.bind(this);
+    this.setDay = this.setDay.bind(this);
     this.userFilter = this.userFilter.bind(this);
     this.filterFilter = this.filterFilter.bind(this);
   }
@@ -240,41 +237,23 @@ class App extends React.Component {
     }
   }
 
-  setDay(day) {
-    var date = new Date(day.target.value);
-    var stringName = day.target.name + "string";
-    console.log(Date.parse(date));
-    console.log(stringName + ": " + date);
-
-
-    this.setState({
-      [day.target.name]: Date.parse(date),
-      [stringName]: day.target.value
-    });
-  }
-
-  setDay2(day, name) {
-
+  setDay(day, name) {
     //Breaking here, TODO dates
     //newDate now has the proper UTC value. This is what you should use in your call.
     //but local date still has to be the state that the form pulls off of - this bit is only
     //for the fetch/url. So is this yet another state?
-    //Also, setDay2 is the only one we use. Delete setDay and rename this.
 
     console.log(day);
     console.log(name);
-    var timeZoneOffset = (new Date).getTimezoneOffset() * 60000;
+    var timeZoneOffset = new Date().getTimezoneOffset() * 60000;
     var date = new Date(day);
     var newDate = Date.parse(date) - timeZoneOffset;
     console.log("New: " + newDate);
-    var d = moment(day).tz('UTC');
-    console.log("Moment: " + d);
     var stringName = name + "string";
     this.setState({
-      [name]: Date.parse(date),
+      [name]: newDate,
       [stringName]: day
     });
-
   }
 
   setPage(page) {
@@ -335,71 +314,71 @@ class App extends React.Component {
           <br />
         </p>
         <div className="filters">
-          <label for="objectFilter">Object Selection: </label>
+          <div className="filtersGrid">
+            <label htmlFor="objectFilter">Object Selection: </label>
 
-          <select
-            name="objectfilter"
-            onChange={this.objectFilter}
-            value={this.state.objectFilter}
-          >
-            <option value="" key="null">
-              All Objects
-            </option>
-            {this.state.objectList.map(targets => (
-              <option value={targets} key={targets}>
-                {targets}
+            <select
+              name="objectfilter"
+              onChange={this.objectFilter}
+              value={this.state.objectFilter}
+            >
+              <option value="" key="null">
+                All Objects
               </option>
-            ))}
-          </select>
+              {this.state.objectList.map(targets => (
+                <option value={targets} key={targets}>
+                  {targets}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="filterFilter">Filter: </label>
+
+            <select
+              name="filterFilter"
+              onChange={this.filterFilter}
+              value={this.state.filterFilter}
+            >
+              <option value="" key="null">
+                Any
+              </option>
+              {this.state.filterList.map(targets => (
+                <option value={targets} key={targets}>
+                  {targets}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="userFilter">User: </label>
+
+            <select
+              name="userfilter"
+              onChange={this.userFilter}
+              value={this.state.userFilter}
+            >
+              <option value="" key="null">
+                All Users
+              </option>
+              {this.state.userList.map(targets => (
+                <option value={targets} key={targets}>
+                  {targets}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <Dates
             name="dateFrom"
-            setDay={this.setDay2}
-            dateCurrent={this.state.dateFromstring}
+            setDay={this.setDay}
+            dateCurrent={this.state.dateFrom}
           />
 
           <Dates
             name="dateTo"
-            setDay={this.setDay2}
+            setDay={this.setDay}
             dateCurrent={this.state.dateTostring}
           />
-
-          <label for="filterFilter">Filter: </label>
-
-          <select
-            name="filterFilter"
-            onChange={this.filterFilter}
-            value={this.state.filterFilter}
-          >
-            <option value="" key="null">
-              Any
-            </option>
-            {this.state.filterList.map(targets => (
-              <option value={targets} key={targets}>
-                {targets}
-              </option>
-            ))}
-          </select>
           <br />
-
-          <label>User: </label>
-
-          <select
-            name="userfilter"
-            onChange={this.userFilter}
-            value={this.state.userFilter}
-          >
-            <option value="" key="null">
-              All Users
-            </option>
-            {this.state.userList.map(targets => (
-              <option value={targets} key={targets}>
-                {targets}
-              </option>
-            ))}
-          </select>
-          <br />
-
           <button
             value="reset"
             id="resetDate"
@@ -416,6 +395,7 @@ class App extends React.Component {
           >
             Reset All
           </button>
+                  <a href={config.files +"/?" + linkString} className="pagelink">Download Selection</a>
         </div>
 
         <div className="pagelinks">
