@@ -6,7 +6,6 @@ var headerobj = {};
 var express=require('express');
 var app = express();
 var cron = require('node-cron');
-const AdmZip = require('adm-zip');
 
 cron.schedule('* 5 * * *', () => {
  getEntries();
@@ -15,7 +14,7 @@ cron.schedule('* 5 * * *', () => {
 app.get('/', function(req, res){
   var data = [];
   var page = 0;
-  var perpage = 10000;
+  var perpage = 100000;
   res.statusCode = 200;
   var query = {};
   res.setHeader('Content-Type', 'text/plain');

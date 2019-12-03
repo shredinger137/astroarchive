@@ -130,3 +130,7 @@ tr:hover{
 td {
   padding: 10px;
 }
+
+.statsTable td, .statsTable th {
+  padding: 3px;
+}
