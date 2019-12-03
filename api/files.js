@@ -1,4 +1,4 @@
-var config = require("./config");
+var config = require("./config.js")
 var mongo = require("mongodb");
 var mongourl = "mongodb://localhost/gortarchive";
 var express = require("express");
@@ -11,6 +11,7 @@ app.get("/", function(req, res) {
   });
 
   var path = (__dirname).replace(/api$/, '');
+  var path = config.imagepath;
   console.log("Path: " + path);
   var name = Math.random().toString(36).substring(2, 15);
   var file = __dirname + "/ziptemp/" + name + ".zip";
