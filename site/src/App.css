@@ -140,4 +140,19 @@ td {
 
 .pagination {
   height: 10vh;
+  display: inline-block;
+}
+
+@media only screen and (max-width: 660px) {
+  .filters {
+    width: 100vw;
+  }
+  .filtersGrid{
+    width: 100vw;
+  }
+
+  table {width: 100vw;}
+  .pagelinks, .pagination {width: 100vw;
+  font-size: 1.2em;}
+
 }

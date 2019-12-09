@@ -7,7 +7,7 @@ import Stats from './Stats';
 
 const routing = (
     //This is a maybe- basename may or may not be the answer to doing this right
-    <Router basename={"/archive"}>
+    <Router basename='/archive'>
       <div>
         <Route exact path="/" component={App} />
         <Route path="/stats" component={Stats} />
