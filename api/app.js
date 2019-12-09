@@ -14,6 +14,8 @@ cron.schedule('* 5 * * *', () => {
 app.get('/', function(req, res){
   var data = [];
   var page = 0;
+
+  //perpage should probably start empty
   var perpage = 100000;
   res.statusCode = 200;
   var query = {};

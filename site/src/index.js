@@ -6,7 +6,8 @@ import App from './App';
 import Stats from './Stats';
 
 const routing = (
-    <Router>
+    //This is a maybe- basename may or may not be the answer to doing this right
+    <Router basename={"/archive"}>
       <div>
         <Route exact path="/" component={App} />
         <Route path="/stats" component={Stats} />

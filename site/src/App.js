@@ -309,10 +309,6 @@ class App extends React.Component {
     return (
       <div className="App">
         <h1 className="headertext">GORT Image Archive</h1>
-        <p style={{ color: "white" }}>
-          Image Count: {this.state.totalItems}
-          <br />
-        </p>
         <div className="filters">
           <div className="filtersGrid">
             <label htmlFor="objectFilter">Object Selection: </label>
@@ -410,6 +406,10 @@ class App extends React.Component {
               perPage={this.state.perpage}
               linkString={linkString}
             />
+  <p>Showing {(this.state.currentPage * this.state.perpage) - (this.state.perpage - 1)}-{this.state.currentPage * this.state.perpage} of {this.state.totalItems}
+     {"  "}<a className="pagecurrent" href="./stats">[Stats]</a>
+              </p>
+            
           </ul>
         </div>
 
@@ -447,7 +447,11 @@ class App extends React.Component {
             ))}
           </tbody>
         </table>
+      <br />
+      <br />
+
       </div>
+
     );
   }
 }
