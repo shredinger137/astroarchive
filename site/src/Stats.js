@@ -70,7 +70,7 @@ class Stats extends React.Component {
     return (
       <div className="App">
         <h1>GORT Archive Stats</h1>
-        <p><a href="/" className="currentpage">[Archive Home]</a></p>
+        <p><a href="./archive" className="currentpage">[Archive Home]</a></p>
 
         <p>Total Archived Images: {this.state.totalItems}</p>
         <br />
