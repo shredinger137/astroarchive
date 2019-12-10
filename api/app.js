@@ -6,6 +6,16 @@ var headerobj = {};
 var express=require('express');
 var app = express();
 var cron = require('node-cron');
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+const csvWriter = createCsvWriter({
+  path: 'out.csv',
+  header: [
+    {id: 'name', title: 'Name'},
+    {id: 'surname', title: 'Surname'},
+    {id: 'age', title: 'Age'},
+    {id: 'gender', title: 'Gender'},
+  ]
+});
 
 cron.schedule('* 5 * * *', () => {
  getEntries();

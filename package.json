@@ -7,6 +7,7 @@
     "adm-zip": "^0.4.13",
     "archiver": "^3.1.1",
     "cors": "^2.8.5",
+    "csv-writer": "^1.5.0",
     "express": "^4.17.1",
     "mongod": "^2.0.0",
     "mongodb": "^3.3.2",

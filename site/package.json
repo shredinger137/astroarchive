@@ -2,7 +2,7 @@
   "name": "site",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://gtn.sonoma.edu/archive",
+  "homepage": "https://gtn.sonoma.edu/archive",
   "dependencies": {
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.27",
