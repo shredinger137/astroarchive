@@ -182,7 +182,6 @@ class App extends React.Component {
       this.state.userFilter +
       "&filter=" +
       this.state.filterFilter;
-    console.log("Fetched: " + fetchUrl);
     fetch(fetchUrl)
       .then(response => response.json())
       .then(responseJson => {
@@ -406,9 +405,11 @@ class App extends React.Component {
               perPage={this.state.perpage}
               linkString={linkString}
             />
-  <p>Showing {(this.state.currentPage * this.state.perpage) - (this.state.perpage - 1)}-{this.state.currentPage * this.state.perpage} of {this.state.totalItems}
-     {"  "}<a className="pagecurrent" href="./stats">[Stats]</a>
-              </p>
+          <div className="tablelike">
+            <span style={{float: 'left'}}>Showing {(this.state.currentPage * this.state.perpage) - (this.state.perpage - 1)}-{this.state.currentPage * this.state.perpage} of {this.state.totalItems}</span>
+            <span style={{float: 'right', marginRight: '50px'}}><a className="pagecurrent" href="./stats">[Stats]</a></span>
+            
+          </div>
             
           </ul>
         </div>

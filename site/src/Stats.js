@@ -1,6 +1,5 @@
 import React from "react";
 import { config } from "./config.js";
-import { isThisHour } from "date-fns";
 
 class Stats extends React.Component {
   state = {
@@ -38,29 +37,6 @@ class Stats extends React.Component {
       });
   }
 
-  makeCSV() {
-    var images;
-    var row = "";
-    var doc = "";
-    for (var i = 0; i <= Object.keys(this.state.items).length; i++) {
-      if (
-        this.state.items &&
-        this.state.items[i] &&
-        this.state.items[i].OBJECT &&
-        this.state.items[i].filename
-      ) {
-        row =
-          row +
-          this.state.items[i].OBJECT +
-          "," +
-          this.state.items[i].filename +
-          "\n";
-      }
-
-      console.log(row);
-    }
-  }
-
   getItemCounts(prop, table) {
     var totalList = {};
     var HTMLObjects = "<table>";
@@ -70,7 +46,7 @@ class Stats extends React.Component {
         this.state.items &&
         this.state.items[i] &&
         this.state.items[i][prop]
-      ) { console.log(this.state.items[i][prop]);
+      ) { 
         if (totalList[this.state.items[i][prop]]) {
           totalList[this.state.items[i][prop]] =
             totalList[this.state.items[i][prop]] + 1;
@@ -79,9 +55,7 @@ class Stats extends React.Component {
         }
       }
     }
-    console.log(totalList);
     var keys = Object.keys(totalList);
-    console.log(keys);
     for (var j = 0; j <= this.state.totalItems; j++) {
       if (keys[j] && totalList[keys[j]]) {
         HTMLObjects =
@@ -93,10 +67,10 @@ class Stats extends React.Component {
   }
 
   render() {
-    console.log("Rendering stats");
     return (
       <div className="App">
         <h1>GORT Archive Stats</h1>
+        <p><a href="/" className="currentpage">[Archive Home]</a></p>
 
         <p>Total Archived Images: {this.state.totalItems}</p>
         <br />
