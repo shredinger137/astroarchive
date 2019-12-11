@@ -12,7 +12,7 @@ app.get("/", function(req, res) {
 
   var path = (__dirname).replace(/api$/, '');
   var path = config.imagepath;
-  console.log("Path: " + path);
+  //console.log("Path: " + path);
   var name = Math.random().toString(36).substring(2, 15);
   var file = __dirname + "/ziptemp/" + name + ".zip";
 
@@ -21,7 +21,7 @@ app.get("/", function(req, res) {
   });
 
   archive.on('end', function() {
-    console.log('Archive wrote %d bytes', archive.pointer());
+    //console.log('Archive wrote %d bytes', archive.pointer());
   });
 
   res.attachment(file);
@@ -70,10 +70,10 @@ app.get("/", function(req, res) {
         .limit(150)
         .toArray(function(err, result) {
           if (err) {
-            console.log(err);
+            //console.log(err);
           }
           if (result) {
-            console.log(__dirname);
+            //console.log(__dirname);
             for (var i = 0; i <= result.length; i++) {
               if (result[i] && result[i].filename) {
                 archive.file(path + result[i].filename, {

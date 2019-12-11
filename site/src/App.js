@@ -414,7 +414,7 @@ class App extends React.Component {
           </ul>
         </div>
 
-        <table>
+        <table className="archiveTable">
           <thead>
             <tr>
               <th></th>

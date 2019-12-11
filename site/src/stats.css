@@ -1,0 +1,15 @@
+.gridwrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-auto-flow: column;
+    align-items: center;
+    padding: 1.2em;
+
+  
+  }
+
+.w-75 {
+    width: 75vw;
+    margin: 0 auto;
+    text-align: center;
+}
