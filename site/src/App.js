@@ -33,7 +33,8 @@ class App extends React.Component {
     userList: [],
     userFilter: "",
     filterList: [],
-    filterFilter: ""
+    filterFilter: "",
+    testString: ''
   };
 
   componentDidMount() {
@@ -58,7 +59,10 @@ class App extends React.Component {
 
   dateConvert1(datetime) {
     if (datetime) {
-      var date = new Date(+datetime);
+      var localDate = new Date();
+      var timezone = localDate.getTimezoneOffset() * 60000;
+      var newDate = datetime + timezone;
+      var date = new Date(+newDate);
       var minutes = date.getMinutes();
       var hours = date.getHours();
       if (minutes < 10) {
@@ -237,17 +241,18 @@ class App extends React.Component {
   }
 
   setDay(day, name) {
-    //Breaking here, TODO dates
-    //newDate now has the proper UTC value. This is what you should use in your call.
-    //but local date still has to be the state that the form pulls off of - this bit is only
-    //for the fetch/url. So is this yet another state?
+    if(name == 'dateFrom'){
+    this.setState({
+      dateFromstring: day
+    })}
+    if(name == 'dateTo'){
+      this.setState({
+        dateTostring: day
+      })}
 
-    console.log(day);
-    console.log(name);
     var timeZoneOffset = new Date().getTimezoneOffset() * 60000;
     var date = new Date(day);
     var newDate = Date.parse(date) - timeZoneOffset;
-    console.log("New: " + newDate);
     var stringName = name + "string";
     this.setState({
       [name]: newDate,
@@ -266,7 +271,7 @@ class App extends React.Component {
       dateFrom: "",
       dateTo: "",
       dateFromstring: "",
-      dateTostring: ""
+      dateTostring: "",
     });
   }
 
@@ -365,7 +370,7 @@ class App extends React.Component {
           <Dates
             name="dateFrom"
             setDay={this.setDay}
-            dateCurrent={this.state.dateFrom}
+            dateCurrent={this.state.dateFromstring}
           />
 
           <Dates

@@ -8,11 +8,18 @@ import "react-datepicker/dist/react-datepicker.css";
  
 export default class Dates extends React.Component {
   state = {
-    startDate: new Date()
+    startDate: ''
   };
  
+componentDidUpdate(){
+  if(this.props.dateCurrent == '' && this.state.startDate != ''){
+    this.setState({startDate: ''});
+  }
+}
+
   handleChange = date => {
     this.props.setDay(date, this.props.name);
+    this.setState({startDate: date});
   };
  
   render() {
@@ -23,6 +30,7 @@ export default class Dates extends React.Component {
       <DatePicker
         maxDate={new Date()}
         onChange={this.handleChange}
+        selected={this.state.startDate}
       />
 
       </div>
