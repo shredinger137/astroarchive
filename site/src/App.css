@@ -150,6 +150,7 @@ td {
   }
   .filtersGrid{
     width: 100vw;
+    padding: 0;
   }
 
   .archiveTable, .tablelike {width: 100vw;}
