@@ -49,8 +49,11 @@ class App extends React.Component {
       prevState.dateFrom !== this.state.dateFrom ||
       prevState.dateTo !== this.state.dateTo ||
       prevState.userFilter !== this.state.userFilter ||
-      prevState.filterFilter !== this.state.filterFilter
-    ) {
+      prevState.filterFilter !== this.state.filterFilter ||
+      prevState.dateFromstring != this.state.dateFromstring ||
+      prevState.dateTostring != this.state.dateTostring
+    
+      ) {
       // TODO: update history after getting the new state
 
       this.loadPage();
@@ -248,8 +251,10 @@ class App extends React.Component {
     if(name == 'dateTo'){
       this.setState({
         dateTostring: day
-      })}
-
+      } ) 
+      
+    }
+      
     var timeZoneOffset = new Date().getTimezoneOffset() * 60000;
     var date = new Date(day);
     var newDate = Date.parse(date) - timeZoneOffset;
@@ -377,6 +382,7 @@ class App extends React.Component {
             name="dateTo"
             setDay={this.setDay}
             dateCurrent={this.state.dateTostring}
+            dateCurrentEpoch={this.state.dateTostring}
           />
           <br />
           <button

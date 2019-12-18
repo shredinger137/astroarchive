@@ -10,11 +10,18 @@ export default class Dates extends React.Component {
   state = {
     startDate: ''
   };
+
+  //dateCurrentEpoch
  
 componentDidUpdate(){
   if(this.props.dateCurrent == '' && this.state.startDate != ''){
     this.setState({startDate: ''});
   }
+} 
+
+componentDidMount(){
+  this.setState({startDate: this.props.dateCurrent});
+  console.log(this.props.dateCurrent);
 }
 
   handleChange = date => {
