@@ -57,23 +57,8 @@ class Stats extends React.Component {
     var bydate = {};
     var xaxis = [];
     var yaxis = [];
-     for (var i = 0; i <= this.state.totalItems; i++) {
-      if (
-        this.state.items &&
-        this.state.items[i] &&
-        this.state.items[i][prop] &&
-        this.state.items[i][prop]
-      ) {
-        var date = new Date(this.state.items[i][prop]);
-        var month = date.getMonth() + 1;
-        var year = date.getFullYear();
-        var dateindex = month + "-" + year;
-        if (bydate[dateindex]) {
-          bydate[dateindex]++;
-        } else {
-          bydate[dateindex] = 1;
-        }
-      }
+    if(this.state.fullStats && this.state.fullStats["totalActivity"]){
+      bydate = this.state.fullStats["totalActivity"];
     }
     var keys = Object.keys(bydate);
     for (var j = 0; j <= keys.length; j++) {

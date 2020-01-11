@@ -445,13 +445,12 @@ function makeStats(entries) {
     for (var i = 0; i < entries.length; i++) {
 
 
-      if(entries[i] && entries[i]["OBJECT"] && entries[i]["FILTER"] && entries[i]["DATEOBS"]){
+      if(entries[i] && entries[i]["OBJECT"] && entries[i]["FILTER"]){
         objectImages += 1;
 
         //Object total, filter totals
         var objectName = entries[i]["OBJECT"];
         var filter = entries[i]["FILTER"];
-        var dateObs = entries[i]["DATEOBS"];
         
         if(!objectsWithFilter[objectName]){
           objectsWithFilter[objectName] = {};
@@ -486,11 +485,14 @@ function makeStats(entries) {
           usersActivity[entries[i]["USER"]] += 1;
         } else {usersActivity[entries[i]["USER"]] = 1; }
       }
-      }
-
+      
+        if(entries[i]){
+          console.log("Entry exists");
+        }
       //Total activity by date
       if(entries[i] && entries[i]["DATEOBS"]){
-        var date = new Date(dateObs);
+        console.log("date conditional");
+        var date = new Date(entries[i]["DATEOBS"]);
         var month = date.getMonth() + 1;
         var year = date.getFullYear();
         var dateindex = month + "-" + year;
@@ -500,7 +502,7 @@ function makeStats(entries) {
           totalActivity[dateindex] = 1;
         }
         
-      }
+    }}
 
       var fullStats = {
         name: "reporting",
