@@ -1,0 +1,4 @@
+export const config = {
+    api: 'https://gtn.sonoma.edu/api',
+    files: 'https://localhost:3005'
+}

@@ -118,20 +118,8 @@ class Stats extends React.Component {
     var userlist = {};
     var xaxis = [];
     var yaxis = [];
-    for (var i = 0; i <= this.state.totalItems; i++) {
-      if (
-        this.state.items &&
-        this.state.items[i] &&
-        this.state.items[i][prop] &&
-        this.state.items[i][prop]
-      ) {
-        var user = this.state.items[i]['USER'];
-        if (userlist[user]) {
-          userlist[user]++;
-        } else {
-          userlist[user] = 1;
-        }
-      }
+    if(this.state.fullStats && this.state.fullStats.users){
+      userlist = this.state.fullStats.users;
     }
     var keys = Object.keys(userlist);
     for (var j = 0; j <= keys.length; j++) {
@@ -170,17 +158,7 @@ class Stats extends React.Component {
     this.setState({ userData: data });
   }
 
-  ObjectSize(obj) {
-    var size = 0, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key)) size++;
-    }
-    return size;
-};
 
-//TODO: This first part just creates the lists. We need to do something with them next. filtersList seems to be complete now, so make
-//a table where each of those are a column, and 'total' (which we get explicitly to make sure it's clear). Drill down list is also an option,
-//but for now I say table.
 
   getItemCounts(prop, table) {
     var totalList = {};
