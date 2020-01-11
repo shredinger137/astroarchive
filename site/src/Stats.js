@@ -45,7 +45,8 @@ class Stats extends React.Component {
       fetch(statsUrl).then(response => response.json()).then(responseJson => {
         if(responseJson && responseJson.result && responseJson.result[0]){
           this.setState({
-            fullStats: responseJson.result[0]
+            fullStats: responseJson.result[0],
+            totalItems: responseJson.result[0]["totals"]["files"]
           });
           console.log(responseJson.result[0]);
         }
