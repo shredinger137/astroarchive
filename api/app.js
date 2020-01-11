@@ -124,7 +124,33 @@ app.get("/stats", function(req, res) {
       var dbo = db.db("gortarchive");
       dbo
         .collection("stats")
-        .find({}, {})
+        .find({name: "lists"}, {})
+        .toArray(function(err, result) {
+          if (err) {
+            throw err;
+          }
+
+          if (result) {
+            res.send({ result });
+          }
+        });
+    }
+  );
+});
+
+app.get("/fullstats", function(req, res) {
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  mongo.connect(
+    mongourl,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo
+        .collection("stats")
+        .find({name: "reporting"}, {})
         .toArray(function(err, result) {
           if (err) {
             throw err;
@@ -292,7 +318,7 @@ function getEntries() {
         .collection("gortarchive")
         .find(
           {},
-          { projection: { _id: 0, filename: 1, OBJECT: 1, USER: 1, FILTER: 1 } }
+          { projection: { _id: 0, filename: 1, OBJECT: 1, USER: 1, FILTER: 1, DATEOBS: 1 } }
         )
         .toArray(function(err, result) {
           let tempresult = [];
@@ -340,16 +366,19 @@ function syncEntries(entries) {
 }
 
 //The makeStats function creates select statistics used both for reporting and for
-//setting up dropdown filters on the frontend. I think it's slightly more performant
-//than getting values dynamically, and since things don't change very quickly it works
-//for us. Note that this is called from getEntries(), so any stat items have to be
+//setting up dropdown filters on the frontend. 
+//Note that this is called from getEntries(), so any stat items have to be
 //in the projection there.
 
 function makeStats(entries) {
   var stats = {};
   var objects = [];
   var objects_clean = [];
+  var objectsWithFilter = {};
+  var usersActivity = {};
+  var totalActivity = {};
 
+  //List of objects
   for (var i = 0; i < entries.length; i++) {
     objects.push(entries[i]["OBJECT"]);
   }
@@ -359,6 +388,7 @@ function makeStats(entries) {
     }
   }
 
+  //List of users
   var users = [];
   var users_clean = [];
   for (var i = 0; i < entries.length; i++) {
@@ -370,6 +400,7 @@ function makeStats(entries) {
     }
   }
 
+  //List of filters
   var filters = [];
   var filters_clean = [];
   for (var i = 0; i < entries.length; i++) {
@@ -380,6 +411,8 @@ function makeStats(entries) {
       filters_clean.push(filters[i]);
     }
   }
+
+  //Add list items
 
   statsObj = {
     name: "lists",
@@ -404,6 +437,100 @@ function makeStats(entries) {
         .replaceOne({ name: "lists" }, statsObj, { upsert: true });
     }
   );
+
+    //reporting stats
+
+    var totalFiles = entries.length;
+    var objectImages = 0;    
+    for (var i = 0; i < entries.length; i++) {
+
+
+      if(entries[i] && entries[i]["OBJECT"] && entries[i]["FILTER"] && entries[i]["DATEOBS"]){
+        objectImages += 1;
+
+        //Object total, filter totals
+        var objectName = entries[i]["OBJECT"];
+        var filter = entries[i]["FILTER"];
+        var dateObs = entries[i]["DATEOBS"];
+        
+        if(!objectsWithFilter[objectName]){
+          objectsWithFilter[objectName] = {};
+        }
+        
+        if(objectsWithFilter[objectName][filter]){
+          objectsWithFilter[objectName][filter] += 1; 
+        } else {objectsWithFilter[objectName][filter] = 1;}
+
+        if(objectsWithFilter[objectName]["total"]){
+          objectsWithFilter[objectName]["total"] += 1; 
+        } else {objectsWithFilter[objectName]["total"] = 1;}
+      }
+      //Accounting for calibration images, which don't have filters
+
+      if(entries[i] && entries[i]["OBJECT"] && !entries[i]["FILTER"]){
+        var objectName = entries[i]["OBJECT"];
+        if(!objectsWithFilter[objectName]){
+          objectsWithFilter[objectName] = {};
+        }
+        if(objectsWithFilter[objectName]["total"]){
+          objectsWithFilter[objectName]["total"] += 1; 
+        } else {objectsWithFilter[objectName]["total"] = 1;}
+      }
+
+      //User stats. I know it's tempting to combine all of this into one block,
+      //but don't. Some valid entries don't have users, or are otherwise incomplete.
+      //Being overly verbose here will let us capture all cases.
+
+      if(entries[i] && entries[i]["USER"]){
+        if(usersActivity[entries[i]["USER"]]){
+          usersActivity[entries[i]["USER"]] += 1;
+        } else {usersActivity[entries[i]["USER"]] = 1; }
+      }
+      }
+
+      //Total activity by date
+      if(entries[i] && entries[i]["DATEOBS"]){
+        var date = new Date(dateObs);
+        var month = date.getMonth() + 1;
+        var year = date.getFullYear();
+        var dateindex = month + "-" + year;
+        if (totalActivity[dateindex]) {
+          totalActivity[dateindex]++;
+        } else {
+          totalActivity[dateindex] = 1;
+        }
+        
+      }
+
+      var fullStats = {
+        name: "reporting",
+        objects: objectsWithFilter,
+        users: usersActivity,
+        totalActivity: totalActivity,
+        totals: {
+          files: totalFiles,
+          objectImages: objectImages
+        }
+      };
+
+      console.log(fullStats);
+      
+      mongo.connect(
+        mongourl,
+        { useNewUrlParser: true, useUnifiedTopology: true },
+        function(err, db) {
+          if (err) throw err;
+          var dbo = db.db("gortarchive");
+          dbo
+            .collection("stats")
+            .replaceOne({ name: "reporting" }, fullStats, { upsert: true });
+        }
+      );
+    
+
+
+
+
 }
 
 getEntries(); //Sync database on app restart. Pretty convenient to have here.

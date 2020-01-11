@@ -41,13 +41,25 @@ class Stats extends React.Component {
       .catch(error => {
         console.error(error);
       });
+      var statsUrl = config.api + "/fullstats";
+      fetch(statsUrl).then(response => response.json()).then(responseJson => {
+        if(responseJson && responseJson.result && responseJson.result[0]){
+          this.setState({
+            fullStats: responseJson.result[0]
+          });
+          console.log(responseJson.result[0]);
+        }
+
+
+
+      });
   }
 
   getActivity(prop) {
     var bydate = {};
     var xaxis = [];
     var yaxis = [];
-    for (var i = 0; i <= this.state.totalItems; i++) {
+     for (var i = 0; i <= this.state.totalItems; i++) {
       if (
         this.state.items &&
         this.state.items[i] &&
@@ -158,35 +170,59 @@ class Stats extends React.Component {
     this.setState({ userData: data });
   }
 
+  ObjectSize(obj) {
+    var size = 0, key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) size++;
+    }
+    return size;
+};
+
+//TODO: This first part just creates the lists. We need to do something with them next. filtersList seems to be complete now, so make
+//a table where each of those are a column, and 'total' (which we get explicitly to make sure it's clear). Drill down list is also an option,
+//but for now I say table.
+
   getItemCounts(prop, table) {
     var totalList = {};
-    var HTMLObjects = "<table>";
-    for (var i = 0; i <= this.state.totalItems; i++) {
-      if (
-        this.state.items &&
-        this.state.items[i] &&
-        this.state.items[i][prop]
-      ) {
-        if (totalList[this.state.items[i][prop]]) {
-          totalList[this.state.items[i][prop]] =
-            totalList[this.state.items[i][prop]] + 1;
-        } else {
-          totalList[this.state.items[i][prop]] = 1;
-        }
+    var objectsList = {};
+    var HTMLObjects = "<table><tr><td>Object</td><td>Total</td>";
+    var filtersList = [];
+    if(this.state.fullStats && this.state.fullStats.objects){
+     objectsList = this.state.fullStats.objects;
+     var objectKeys = Object.keys(objectsList);
+     for(var k = 0; k <= objectKeys.length; k++){
+      if(objectsList[objectKeys[k]]){
+        var filterKeys = Object.keys(objectsList[objectKeys[k]]);
+        for(var p = 0; p <= filterKeys.length; p++){
+          if(filtersList.indexOf(filterKeys[p]) < 0 && filterKeys[p] != undefined && filterKeys[p] != "undefined" && filterKeys[p] != "total"){
+            filtersList.push(filterKeys[p]);
+          }
+    }}
+
+     } 
+    }
+
+    for(var i=0; i<= (Object.keys(filtersList).length - 1); i++){
+      HTMLObjects = HTMLObjects + "<td>" + filtersList[i] + "</td>";
+    }
+    HTMLObjects = HTMLObjects + "</tr>";
+    for(var h = 0; h <= objectKeys.length; h++){
+      if(objectsList && objectsList[objectKeys[h]]){
+        HTMLObjects = HTMLObjects + "<tr><td>" + objectKeys[h] + "</td>";
+        if(objectsList[objectKeys[h]]["total"]){
+          HTMLObjects += "<td>" + objectsList[objectKeys[h]]["total"] + "</td>";
+        } else {HTMLObjects += "<td></td>";}
+        for(var j = 0; j <= (Object.keys(filtersList).length - 1); j++){
+          if(filtersList[j] != "total"){
+          if(objectsList[objectKeys[h]][filtersList[j]]){
+            HTMLObjects += "<td>" + objectsList[objectKeys[h]][filtersList[j]] + "</td>"
+          } else {HTMLObjects += "<td></td>"}
+        }}
+
+        HTMLObjects += "</tr>"; 
       }
     }
-    var keys = Object.keys(totalList);
-    for (var j = 0; j <= this.state.totalItems; j++) {
-      if (keys[j] && totalList[keys[j]]) {
-        HTMLObjects =
-          HTMLObjects +
-          "<tr><td>" +
-          keys[j] +
-          "</td><td>" +
-          totalList[keys[j]] +
-          "</tr></td>";
-      }
-    }
+    
     HTMLObjects += "</table>";
     document.getElementById(table).innerHTML = HTMLObjects;
   }

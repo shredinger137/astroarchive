@@ -382,7 +382,7 @@ class App extends React.Component {
             name="dateTo"
             setDay={this.setDay}
             dateCurrent={this.state.dateTostring}
-            dateCurrentEpoch={this.state.dateTostring}
+            dateCurrentEpoch={this.state.dateTostring} //Is this breaking something?
           />
           <br />
           <button
