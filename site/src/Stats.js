@@ -2,7 +2,7 @@ import React from "react";
 import { config } from "./config.js";
 import "./App.css";
 import "./stats.css";
-import { Line } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 
 class Stats extends React.Component {
   state = {
@@ -17,9 +17,8 @@ class Stats extends React.Component {
     this.loadPage();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prev) {
     this.getItemCounts("OBJECT", "countTable");
-    //this.getItemCounts("USER", "userTable");
   }
 
   loadPage() {
@@ -32,8 +31,7 @@ class Stats extends React.Component {
             items: responseJson.items,
             totalItems: responseJson.count
           });
-          this.getActivity('DATEOBS');
-          this.getUsers('USER');
+   
         } else {
           this.setState({ items: [], totalItems: 0 });
         }
@@ -49,10 +47,9 @@ class Stats extends React.Component {
             totalItems: responseJson.result[0]["totals"]["files"]
           });
           console.log(responseJson.result[0]);
+          this.getActivity('DATEOBS');
+          this.getUsers('USER');
         }
-
-
-
       });
   }
 
@@ -115,11 +112,11 @@ class Stats extends React.Component {
     this.setState({ useData: data });
   }
 
-  getUsers(prop) {
+  getUsers() {
     var userlist = {};
     var xaxis = [];
     var yaxis = [];
-    if(this.state.fullStats && this.state.fullStats.users){
+    if(this.state.fullStats && this.state.fullStats["users"]){
       userlist = this.state.fullStats.users;
     }
     var keys = Object.keys(userlist);
@@ -227,7 +224,7 @@ class Stats extends React.Component {
             />
           </div>
           <div id="users" style={{padding: '10px'}}>
-          <Line
+          <Bar
               data={this.state.userData}
               width={250}
               height={350}
