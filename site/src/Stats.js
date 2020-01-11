@@ -23,22 +23,6 @@ class Stats extends React.Component {
 
   loadPage() {
     var fetchUrl = config.api;
-    fetch(fetchUrl)
-      .then(response => response.json())
-      .then(responseJson => {
-        if (responseJson.count != 0) {
-          this.setState({
-            items: responseJson.items,
-            totalItems: responseJson.count
-          });
-   
-        } else {
-          this.setState({ items: [], totalItems: 0 });
-        }
-      })
-      .catch(error => {
-        console.error(error);
-      });
       var statsUrl = config.api + "/fullstats";
       fetch(statsUrl).then(response => response.json()).then(responseJson => {
         if(responseJson && responseJson.result && responseJson.result[0]){
