@@ -41,17 +41,48 @@ class Stats extends React.Component {
     var bydate = {};
     var xaxis = [];
     var yaxis = [];
+
+    var minMonth = 12; 
+    var minYear = 9999; 
+    var maxMonth = 1; 
+    var maxYear = 0; 
+    var thisMonth; var thisYear;
+
     if(this.state.fullStats && this.state.fullStats["totalActivity"]){
       bydate = this.state.fullStats["totalActivity"];
     }
     var keys = Object.keys(bydate);
+
     for (var j = 0; j <= keys.length; j++) {
       if (keys[j] && keys[j] != "undefined") {
-        xaxis.push(keys[j]);
-        yaxis.push(bydate[keys[j]]);
+        console.log(keys[j]);
+
+      //This should have an if
+      thisMonth = (String(keys[j]).match(/.+[0-9]?(?=\-)/))[0];
+      console.log(thisMonth);
+      thisYear = (String(keys[j]).match(/(?<=\-).+[0-9]?/))[0];
+      if(thisYear < minYear){
+        minYear = thisYear;
+      }
+      if(thisMonth && thisYear == minYear && thisMonth < minMonth){
+        minMonth = thisMonth;
+      }
+      
+
+      //Max pattern
+      if(thisYear > maxYear){
+        maxYear = thisYear;
+      }
+      if(thisMonth && thisYear == maxYear && thisMonth > maxMonth){
+        maxMonth = thisMonth;
+      }
+    
+      xaxis.push(keys[j]);
+      yaxis.push(bydate[keys[j]]);
       }
     }
-
+    console.log("Min: " + minMonth + "-" + minYear);
+    console.log("Max: " + maxMonth + "-" + maxYear);
     const data = {
       labels: xaxis.reverse(),
       datasets: [
@@ -128,10 +159,10 @@ class Stats extends React.Component {
 
 
   getItemCounts(prop, table) {
-    var totalList = {};
     var objectsList = {};
     var HTMLObjects = "<table><tr><td>Object</td><td>Total</td>";
     var filtersList = [];
+
     if(this.state.fullStats && this.state.fullStats.objects){
      objectsList = this.state.fullStats.objects;
      var objectKeys = Object.keys(objectsList);

@@ -371,12 +371,12 @@ function syncEntries(entries) {
 //in the projection there.
 
 function makeStats(entries) {
-  var stats = {};
   var objects = [];
   var objects_clean = [];
   var objectsWithFilter = {};
   var usersActivity = {};
   var totalActivity = {};
+  var activityOverTime = {};
 
   //List of objects
   for (var i = 0; i < entries.length; i++) {
@@ -490,8 +490,8 @@ function makeStats(entries) {
           console.log("Entry exists");
         }
       //Total activity by date
+
       if(entries[i] && entries[i]["DATEOBS"]){
-        console.log("date conditional");
         var date = new Date(entries[i]["DATEOBS"]);
         var month = date.getMonth() + 1;
         var year = date.getFullYear();
@@ -501,6 +501,7 @@ function makeStats(entries) {
         } else {
           totalActivity[dateindex] = 1;
         }
+
         
     }}
 
@@ -509,6 +510,7 @@ function makeStats(entries) {
         objects: objectsWithFilter,
         users: usersActivity,
         totalActivity: totalActivity,
+        activityOverTime: activityOverTime,
         totals: {
           files: totalFiles,
           objectImages: objectImages
