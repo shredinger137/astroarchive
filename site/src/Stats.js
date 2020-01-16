@@ -47,44 +47,43 @@ class Stats extends React.Component {
     var maxMonth = 1; 
     var maxYear = 0; 
     var thisMonth; var thisYear;
-
-    if(this.state.fullStats && this.state.fullStats["totalActivity"]){
+    if(this.state.fullStats && this.state.fullStats["minDate"] && this.state.fullStats["maxDate"] && this.state.fullStats["totalActivity"]){
+      var minDate = new Date(this.state.fullStats["minDate"]);
+      var maxDate = new Date(this.state.fullStats["maxDate"]);
       bydate = this.state.fullStats["totalActivity"];
     }
+    
+    var minMonth = minDate.getMonth() + 1;
+    var minYear = minDate.getFullYear();
+    var maxMonth = maxDate.getMonth() + 1;
+    var maxYear = maxDate.getFullYear();
+    var monthCount = (12 * (maxYear - minYear)) + (maxMonth - minMonth);
+    var thisMonth = minMonth;
+    var thisYear = minYear;
+    
     var keys = Object.keys(bydate);
 
-    for (var j = 0; j <= keys.length; j++) {
-      if (keys[j] && keys[j] != "undefined") {
-        console.log(keys[j]);
-
-      //This should have an if
-      thisMonth = (String(keys[j]).match(/.+[0-9]?(?=\-)/))[0];
-      console.log(thisMonth);
-      thisYear = (String(keys[j]).match(/(?<=\-).+[0-9]?/))[0];
-      if(thisYear < minYear){
-        minYear = thisYear;
-      }
-      if(thisMonth && thisYear == minYear && thisMonth < minMonth){
-        minMonth = thisMonth;
-      }
+    for(var j = 0; j <= monthCount; j++){
+      var thisDate = thisMonth + "-" + thisYear;
+      if(this.state.fullStats && this.state.fullStats["totalActivity"] && this.state.fullStats["totalActivity"][thisDate]){
+        var thisCount = this.state.fullStats["totalActivity"][thisDate];
+      } else {var thisCount = 0;}
       
+      console.log(thisDate + ": " + thisCount);
 
-      //Max pattern
-      if(thisYear > maxYear){
-        maxYear = thisYear;
-      }
-      if(thisMonth && thisYear == maxYear && thisMonth > maxMonth){
-        maxMonth = thisMonth;
-      }
-    
-      xaxis.push(keys[j]);
-      yaxis.push(bydate[keys[j]]);
-      }
-    }
-    console.log("Min: " + minMonth + "-" + minYear);
-    console.log("Max: " + maxMonth + "-" + maxYear);
+      if(thisMonth < 12){
+        thisMonth++; } else {
+          thisMonth = 1;
+          thisYear++;
+        }
+
+      xaxis.push(thisDate);
+      yaxis.push(thisCount);
+     }
+
+
     const data = {
-      labels: xaxis.reverse(),
+      labels: xaxis,
       datasets: [
         {
           label: "GORT Activity",
@@ -105,7 +104,7 @@ class Stats extends React.Component {
           pointHoverBorderWidth: 2,
           pointRadius: 1,
           pointHitRadius: 10,
-          data: yaxis.reverse()
+          data: yaxis
         }
       ]
     };

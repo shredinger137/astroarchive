@@ -439,6 +439,8 @@ function makeStats(entries) {
   );
 
     //reporting stats
+    var maxDate = 0;
+    var minDate = 0;
 
     var totalFiles = entries.length;
     var objectImages = 0;    
@@ -492,6 +494,13 @@ function makeStats(entries) {
       //Total activity by date
 
       if(entries[i] && entries[i]["DATEOBS"]){
+        if(entries[i]["DATEOBS"] < minDate || minDate == 0){
+          minDate = entries[i]["DATEOBS"];
+        }
+        if(entries[i]["DATEOBS"] > maxDate){
+          maxDate = entries[i]["DATEOBS"]
+        }
+
         var date = new Date(entries[i]["DATEOBS"]);
         var month = date.getMonth() + 1;
         var year = date.getFullYear();
@@ -504,7 +513,7 @@ function makeStats(entries) {
 
         
     }}
-
+ 
       var fullStats = {
         name: "reporting",
         objects: objectsWithFilter,
@@ -514,7 +523,9 @@ function makeStats(entries) {
         totals: {
           files: totalFiles,
           objectImages: objectImages
-        }
+        },
+        maxDate: maxDate,
+        minDate: minDate
       };
 
       console.log(fullStats);
