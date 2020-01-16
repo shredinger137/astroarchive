@@ -58,6 +58,7 @@ class App extends React.Component {
 
       this.loadPage();
     }
+    console.log(this.state);
   }
 
   dateConvert1(datetime) {
@@ -189,6 +190,7 @@ class App extends React.Component {
       this.state.userFilter +
       "&filter=" +
       this.state.filterFilter;
+    console.log("URL: " + fetchUrl);
     fetch(fetchUrl)
       .then(response => response.json())
       .then(responseJson => {
@@ -382,7 +384,6 @@ class App extends React.Component {
             name="dateTo"
             setDay={this.setDay}
             dateCurrent={this.state.dateTostring}
-            dateCurrentEpoch={this.state.dateTostring} //Is this breaking something?
           />
           <br />
           <button
