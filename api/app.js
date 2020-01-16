@@ -61,8 +61,6 @@ app.get("/", function(req, res) {
     query["OBJECT"] = req.query.object;
   }
 
-  console.log(query);
-
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
