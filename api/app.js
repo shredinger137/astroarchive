@@ -76,8 +76,6 @@ app.get("/", function(req, res) {
             OBJECT: 1,
             FILTER: 1,
             DATEOBS: 1,
-            AZIMUTH: 1,
-            ALTITUDE: 1,
             CCDTEMP: 1,
             USER: 1,
             EXPTIME: 1
@@ -328,8 +326,10 @@ function getEntries() {
           if (err) throw err;
           db.close();
           syncEntries(tempresult);
-          makeStats(result);
         });
+        dbo.collection("gortarchive").createIndex( {DATEOBS: -1}, function(err, result){
+          console.log(result);
+        })
     }
   );
 }
@@ -487,10 +487,7 @@ function makeStats(entries) {
           usersActivity[entries[i]["USER"]] += 1;
         } else {usersActivity[entries[i]["USER"]] = 1; }
       }
-      
-        if(entries[i]){
-          console.log("Entry exists");
-        }
+ 
       //Total activity by date
 
       if(entries[i] && entries[i]["DATEOBS"]){
@@ -527,9 +524,7 @@ function makeStats(entries) {
         maxDate: maxDate,
         minDate: minDate
       };
-
-      console.log(fullStats);
-      
+     
       mongo.connect(
         mongourl,
         { useNewUrlParser: true, useUnifiedTopology: true },
