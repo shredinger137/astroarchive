@@ -326,6 +326,7 @@ function getEntries() {
           if (err) throw err;
           db.close();
           syncEntries(tempresult);
+          makeStats(result);
         });
         dbo.collection("gortarchive").createIndex( {DATEOBS: -1}, function(err, result){
           console.log(result);
