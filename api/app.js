@@ -6,6 +6,10 @@ var headerobj = {};
 var express = require("express");
 var app = express();
 var cron = require("node-cron");
+const https = require('https');
+
+
+
 
 //TODO: Create a CSV file with the entire contents, updated regularly.
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
@@ -38,6 +42,11 @@ app.get("/", function(req, res) {
     if (req.query.perpage) {
       perpage = parseInt(req.query.perpage);
     }
+  }
+
+  if (req.query.fullquery){
+    //take full query parameters, decode, make an object
+    //this doesn't currently have a matching bit on the other side
   }
 
   if (req.query.dateFrom && req.query.dateTo) {
@@ -538,11 +547,95 @@ function makeStats(entries) {
         }
       );
     
+}
+
+function getdata(object){
+  var url = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
+  var query = `SELECT otype
+  FROM basic 
+  JOIN ident ON oid = oidref
+  WHERE id = '` + object + `';`
+
+  query_otype = ``;
+
+  query = encodeURI(query);
+
+  https.get(url + query, (resp) => {
+  let data = '';
+
+  // A chunk of data has been recieved.
+  resp.on('data', (chunk) => {
+    data += chunk;
+  });
+
+  // The whole response has been received. Print out the result.
+  resp.on('end', () => {
+    if(JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]){
+    console.log(JSON.parse(data).data[0][0]);
+    getType(JSON.parse(data).data[0][0], object); } else {console.log("response error on " + object);}
+  });
+
+}).on("error", (err) => {
+  console.log("Error: " + err.message);
+});
+}
+
+function getType(type, object){
+  var url = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
+  var query = `SELECT otype_longname, otype_shortname FROM otypedef WHERE otype = 0` + type + `;`
 
 
+  query_otype = ``;
 
+  query = encodeURI(query);
+
+  https.get(url + query, (resp) => {
+  let data = '';
+
+  // A chunk of data has been recieved.
+  resp.on('data', (chunk) => {
+    data += chunk;
+  });
+
+  // The whole response has been received. Print out the result.
+  resp.on('end', () => {
+    console.log(object + ": " + JSON.parse(data).data[0][0]);
+  });
+
+}).on("error", (err) => {
+  console.log("Error: " + err.message);
+});
+}
+
+function getAllTypes(){
+  mongo.connect(
+    mongourl,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo
+        .collection("stats")
+        .find(
+          {name: "lists"},
+          { projection: { _id: 0, objects: 1} }
+        )
+        .toArray(function(err, result) {
+            console.log(result[0]['objects']);
+            for(var x in result[0]['objects']){
+              getdata(result[0]['objects'][x]);
+            }
+          if (err) throw err;
+          db.close();
+
+        });
+    }
+  );
 
 }
+
+getdata("ap her");
+getAllTypes();
 
 getEntries(); //Sync database on app restart. Pretty convenient to have here.
 app.listen(3001);
