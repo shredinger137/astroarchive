@@ -10,21 +10,10 @@ const https = require('https');
 
 
 
-
-//TODO: Create a CSV file with the entire contents, updated regularly.
-const createCsvWriter = require("csv-writer").createObjectCsvWriter;
-const csvWriter = createCsvWriter({
-  path: "gtnarchive.csv",
-  header: [
-    { id: "filename", title: "Filename" },
-    { id: "field2", title: "field2" },
-    { id: "field3", title: "field3" },
-    { id: "field4", title: "field4" }
-  ]
-});
-
 cron.schedule("* 5 * * *", () => {
   getEntries();
+  getObjectData();
+
 });
 
 app.get("/", function(req, res) {
@@ -143,6 +132,7 @@ app.get("/stats", function(req, res) {
         });
     }
   );
+
 });
 
 app.get("/fullstats", function(req, res) {
@@ -157,14 +147,36 @@ app.get("/fullstats", function(req, res) {
       var dbo = db.db("gortarchive");
       dbo
         .collection("stats")
-        .find({name: "reporting"}, {})
-        .toArray(function(err, result) {
+        .findOne({name: "reporting"}, {projection: { _id: 0}}, function(err, result)
+         {
           if (err) {
             throw err;
           }
-
           if (result) {
-            res.send({ result });
+            mongo.connect(
+              mongourl,
+              { useNewUrlParser: true, useUnifiedTopology: true },
+              function(err, db) {
+                if (err) throw err;
+                var dbo = db.db("gortarchive");
+                dbo
+                  .collection("objectData")
+                  .find({}, {projection: { _id: 0}})
+                  .toArray(function(err, objectData) {
+                    if (err) {
+                      throw err;
+                    }
+          
+                    if (objectData) {
+                      var totalResult = {};
+                      totalResult["objectData"] = objectData;
+                      totalResult["fullStats"] = result;
+                      res.send( totalResult );
+                    }
+                  });
+              }
+            );
+          //  res.send({ result });
           }
         });
     }
@@ -549,65 +561,16 @@ function makeStats(entries) {
     
 }
 
-function getdata(object){
-  var url = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
-  var query = `SELECT otype
-  FROM basic 
-  JOIN ident ON oid = oidref
-  WHERE id = '` + object + `';`
+//Restructure this to use callbacks, so that the object list is fed into a function
+//that then gets the data, and the API call adds to the object when it's finished
+//run object API call as a function in the iteration, where object is an argument, just like it started
 
-  query_otype = ``;
+//First in the chain: get a list of all objects in the archive. In the
+//function after the data is pulled, run objectApiCall on each one. This 
+//will update the database with the first round of information, object type.
 
-  query = encodeURI(query);
+function getObjectData(){
 
-  https.get(url + query, (resp) => {
-  let data = '';
-
-  // A chunk of data has been recieved.
-  resp.on('data', (chunk) => {
-    data += chunk;
-  });
-
-  // The whole response has been received. Print out the result.
-  resp.on('end', () => {
-    if(JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]){
-    console.log(JSON.parse(data).data[0][0]);
-    getType(JSON.parse(data).data[0][0], object); } else {console.log("response error on " + object);}
-  });
-
-}).on("error", (err) => {
-  console.log("Error: " + err.message);
-});
-}
-
-function getType(type, object){
-  var url = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
-  var query = `SELECT otype_longname, otype_shortname FROM otypedef WHERE otype = 0` + type + `;`
-
-
-  query_otype = ``;
-
-  query = encodeURI(query);
-
-  https.get(url + query, (resp) => {
-  let data = '';
-
-  // A chunk of data has been recieved.
-  resp.on('data', (chunk) => {
-    data += chunk;
-  });
-
-  // The whole response has been received. Print out the result.
-  resp.on('end', () => {
-    console.log(object + ": " + JSON.parse(data).data[0][0]);
-  });
-
-}).on("error", (err) => {
-  console.log("Error: " + err.message);
-});
-}
-
-function getAllTypes(){
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
@@ -621,9 +584,9 @@ function getAllTypes(){
           { projection: { _id: 0, objects: 1} }
         )
         .toArray(function(err, result) {
-            console.log(result[0]['objects']);
-            for(var x in result[0]['objects']){
-              getdata(result[0]['objects'][x]);
+            var objectList = result[0]['objects'];
+            for(object of objectList){
+              objectApiCall(object)
             }
           if (err) throw err;
           db.close();
@@ -634,8 +597,97 @@ function getAllTypes(){
 
 }
 
-getdata("ap her");
-getAllTypes();
+//Make API call to get information on object types. We also build the first part of the 
+//database insert object here. This is a series of nested API calls. Sorry. Really I am.
+//If you want to get more detailed information for later, put another call using the same query system 
+//into the next nested area. Again. Sorry.
+
+function objectApiCall(object){
+  var databaseObject = {};
+  databaseObject["name"] = object;
+  var url = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
+  var query = encodeURI(`SELECT otype FROM basic JOIN ident ON oid = oidref WHERE id = '` + object + `';`);
+  https.get(url + query, (resp) => {
+    let data = '';
+  
+    // A chunk of data has been recieved.
+    resp.on('data', (chunk) => {
+      data += chunk;
+    });
+  
+    // The whole response has been received. Add 'otype' to the database object and start the
+    // next step, where we find out what it means.
+
+    resp.on('end', () => {
+      if(JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]){
+        var type = JSON.parse(data).data[0][0];
+        databaseObject["otype"] = type;
+        //call the next query, which tells us what the number means
+        var url = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
+        var query = encodeURI(`SELECT otype_longname, otype_shortname FROM otypedef WHERE otype = 0` + type + `;`);
+        https.get(url + query, (resp) => {
+          let data = '';
+        
+          // A chunk of data has been recieved.
+          resp.on('data', (chunk) => {
+            data += chunk;
+          });
+        
+          //The whole response has been received. Add 'otype_txt' to the object and print for debug.
+          //Since this is our end point, we're going to call the write method. Move this if you nest
+          //an additional call later.
+
+          //Since GTN is focused on analyzing variable and eclipsing binary systems, this has a boolean
+          //component for those two classes.
+
+          resp.on('end', () => {
+            if(JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]){
+              databaseObject["otype_txt"] = JSON.parse(data).data[0][0];
+              console.log(databaseObject);
+
+              JSON.parse(data).data[0][0].includes("binary") ? databaseObject["binary"] = true : databaseObject["binary"] = false
+              JSON.parse(data).data[0][0].includes("variable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
+
+              
+              //***********************************/
+              writeObjectData(databaseObject);
+              //***********************************/
+
+
+            }
+          });
+        
+          //this error is for the second api call
+          }).on("error", (err) => {
+            console.log("Error: " + err.message);
+          });
+
+        
+        } else {console.log("response error on " + object);}
+      });
+   //this error is for the first api call 
+  }).on("error", (err) => {
+    console.log("Error: " + err.message);
+  });
+}
+
+function writeObjectData(objectData){
+  mongo.connect(
+    mongourl,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo
+        .collection("objectData")
+        .replaceOne({ name: objectData["name"] }, objectData, { upsert: true });
+    }
+  );
+}
+
+
 
 getEntries(); //Sync database on app restart. Pretty convenient to have here.
+getObjectData();
+
 app.listen(3001);

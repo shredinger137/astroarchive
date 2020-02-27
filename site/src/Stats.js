@@ -10,32 +10,60 @@ class Stats extends React.Component {
     totalItems: 0,
     itemCounts: {},
     itemCountsHTML: "",
-    useData: {}
+    useData: {},
+    objectData: {}
   };
 
   componentDidMount() {
     this.loadPage();
   }
 
-  componentDidUpdate(prev) {
+  componentDidUpdate() {
     this.getItemCounts("OBJECT", "countTable");
   }
 
   loadPage() {
-    var fetchUrl = config.api;
+    
       var statsUrl = config.api + "/fullstats";
       fetch(statsUrl).then(response => response.json()).then(responseJson => {
-        if(responseJson && responseJson.result && responseJson.result[0]){
+        if(responseJson && responseJson.fullStats){
           this.setState({
-            fullStats: responseJson.result[0],
-            totalItems: responseJson.result[0]["totals"]["files"]
+            fullStats: responseJson.fullStats,
+            totalItems: responseJson["fullStats"]["totals"]["files"]
           });
-          console.log(responseJson.result[0]);
+          console.log(responseJson.fullStats);
           this.getActivity('DATEOBS');
           this.getUsers('USER');
+          
+          if(responseJson["objectData"]){
+            this.setState({objectData: responseJson.objectData})
+            this.objectsTable();
+          }
+
         }
+
       });
   }
+
+  objectsTable(){
+ 
+    var HTMLObjects = "<table><tr><td>Object</td><td>Type</td>";
+  
+    if(this.state.objectData){
+      if(this.state.objectData && Array.isArray(this.state.objectData)){
+      for(var object of this.state.objectData){
+        if(object["name"] && object["otype_txt"]){
+          var HTMLObjects = HTMLObjects + "<tr><td>" + object["name"] + "</td><td>" + object["otype_txt"] + "</td></tr>";
+        }
+      }
+      HTMLObjects = HTMLObjects + "</table>";
+      document.getElementById("objectData").innerHTML = HTMLObjects;
+      console.log(HTMLObjects);
+ 
+
+    }
+
+  }}
 
   getActivity(prop) {
     var bydate = {};
@@ -156,7 +184,6 @@ class Stats extends React.Component {
   }
 
 
-
   getItemCounts(prop, table) {
     var objectsList = {};
     var HTMLObjects = "<table><tr><td>Object</td><td>Total</td>";
@@ -213,7 +240,7 @@ class Stats extends React.Component {
         </p>
         <p>Total Archived Images: {this.state.totalItems}</p>
         <div className="gridwrapper w-75">
-          <div id="countTable" className="statsTable"></div>
+          
           <div id="usage" style={{padding: '10px'}}>
             <Line
               data={this.state.useData}
@@ -230,6 +257,8 @@ class Stats extends React.Component {
               options={{ maintainAspectRatio: false }}
             />
           </div>
+          <div id="countTable" className="statsTable"></div>
+          <div id="objectData" className="statsTable"></div>
         </div>
       </div>
     );
