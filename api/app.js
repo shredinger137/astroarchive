@@ -645,8 +645,10 @@ function objectApiCall(object){
               databaseObject["otype_txt"] = JSON.parse(data).data[0][0];
               console.log(databaseObject);
 
-              JSON.parse(data).data[0][0].includes("binary") ? databaseObject["binary"] = true : databaseObject["binary"] = false
-              JSON.parse(data).data[0][0].includes("variable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
+              //Check if it's a binary or variable. First letter is missign for capitals.
+              
+              JSON.parse(data).data[0][0].includes("inary") ? databaseObject["binary"] = true : databaseObject["binary"] = false
+              JSON.parse(data).data[0][0].includes("ariable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
 
               
               //***********************************/
