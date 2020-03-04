@@ -15,6 +15,7 @@ const https = require('https');
 cron.schedule("* 5 * * *", () => {
   getEntries();
   getObjectData();
+  
 
 });
 
@@ -143,6 +144,7 @@ app.get("/stats", function(req, res) {
 });
 
 app.get("/fullstats", function(req, res) {
+  console.log("triggered /fullstats");
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -577,6 +579,8 @@ function makeStats(entries) {
 //will update the database with the first round of information, object type.
 
 function getObjectData(){
+
+  console.log("Running getObjectData");
 
   mongo.connect(
     mongourl,
