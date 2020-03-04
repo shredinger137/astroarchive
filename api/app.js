@@ -9,12 +9,18 @@ var cron = require("node-cron");
 const https = require('https');
 
 
+//Call periodic functions to sync the database. Note that the data
+//is assumed to be there, we do that part of the sync separately.
 
 cron.schedule("* 5 * * *", () => {
   getEntries();
   getObjectData();
 
 });
+
+/**********************************
+********* Routes *****************/
+
 
 app.get("/", function(req, res) {
   var data = [];
@@ -36,6 +42,7 @@ app.get("/", function(req, res) {
   if (req.query.fullquery){
     //take full query parameters, decode, make an object
     //this doesn't currently have a matching bit on the other side
+    //and exists entirely for testing
   }
 
   if (req.query.dateFrom && req.query.dateTo) {
@@ -645,16 +652,15 @@ function objectApiCall(object){
               databaseObject["otype_txt"] = JSON.parse(data).data[0][0];
               console.log(databaseObject);
 
-              //Check if it's a binary or variable. First letter is missign for capitals.
-              
-              JSON.parse(data).data[0][0].includes("inary") ? databaseObject["binary"] = true : databaseObject["binary"] = false
-              JSON.parse(data).data[0][0].includes("ariable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
+              //Check if it's a binary or variable, including
+              //cepheids in particular. First letter is missign for capitals.
 
-              
+              JSON.parse(data).data[0][0].includes("clipsing binary") ? databaseObject["binary"] = true : databaseObject["binary"] = false
+              JSON.parse(data).data[0][0].includes("ariable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
+              JSON.parse(data).data[0][0].includes("epheid") ? databaseObject["cepheid"] = true : databaseObject["cepheid"] = false
               //***********************************/
               writeObjectData(databaseObject);
               //***********************************/
-
 
             }
           });
