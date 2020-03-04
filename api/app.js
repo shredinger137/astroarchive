@@ -179,7 +179,7 @@ app.get("/fullstats", function(req, res) {
                       totalResult["objectData"] = objectData;
                       totalResult["fullStats"] = result;
                       res.send( totalResult );
-                    }
+                    } else {res.send("object data failed");}
                   });
               }
             );
@@ -653,7 +653,7 @@ function objectApiCall(object){
               console.log(databaseObject);
 
               //Check if it's a binary or variable, including
-              //cepheids in particular. First letter is missign for capitals.
+              //cepheids in particular. 
 
               JSON.parse(data).data[0][0].includes("clipsing binary") ? databaseObject["binary"] = true : databaseObject["binary"] = false
               JSON.parse(data).data[0][0].includes("ariable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
