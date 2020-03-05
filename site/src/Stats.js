@@ -4,6 +4,8 @@ import "./App.css";
 import "./stats.css";
 import { Line, Bar } from 'react-chartjs-2';
 
+/* eslint-disable eqeqeq */
+
 class Stats extends React.Component {
   state = {
     items: [],
@@ -53,7 +55,7 @@ class Stats extends React.Component {
       if(this.state.objectData && Array.isArray(this.state.objectData)){
       for(var object of this.state.objectData){
         if(object["name"] && object["otype_txt"]){
-          var HTMLObjects = HTMLObjects + "<tr><td>" + object["name"] + "</td><td>" + object["otype_txt"] + "</td></tr>";
+          HTMLObjects = HTMLObjects + "<tr><td>" + object["name"] + "</td><td>" + object["otype_txt"] + "</td></tr>";
         }
       }
       HTMLObjects = HTMLObjects + "</table>";
@@ -66,7 +68,7 @@ class Stats extends React.Component {
   }}
 
   getActivity(prop) {
-    var bydate = {};
+
     var xaxis = [];
     var yaxis = [];
 
@@ -78,24 +80,22 @@ class Stats extends React.Component {
     if(this.state.fullStats && this.state.fullStats["minDate"] && this.state.fullStats["maxDate"] && this.state.fullStats["totalActivity"]){
       var minDate = new Date(this.state.fullStats["minDate"]);
       var maxDate = new Date(this.state.fullStats["maxDate"]);
-      bydate = this.state.fullStats["totalActivity"];
     }
     
-    var minMonth = minDate.getMonth() + 1;
-    var minYear = minDate.getFullYear();
-    var maxMonth = maxDate.getMonth() + 1;
-    var maxYear = maxDate.getFullYear();
+    minMonth = minDate.getMonth() + 1;
+    minYear = minDate.getFullYear();
+    maxMonth = maxDate.getMonth() + 1;
+    maxYear = maxDate.getFullYear();
     var monthCount = (12 * (maxYear - minYear)) + (maxMonth - minMonth);
-    var thisMonth = minMonth;
-    var thisYear = minYear;
-    
-    var keys = Object.keys(bydate);
+    thisMonth = minMonth;
+    thisYear = minYear;
+
 
     for(var j = 0; j <= monthCount; j++){
       var thisDate = thisMonth + "-" + thisYear;
       if(this.state.fullStats && this.state.fullStats["totalActivity"] && this.state.fullStats["totalActivity"][thisDate]){
         var thisCount = this.state.fullStats["totalActivity"][thisDate];
-      } else {var thisCount = 0;}
+      } else {thisCount = 0;}
       
       console.log(thisDate + ": " + thisCount);
 

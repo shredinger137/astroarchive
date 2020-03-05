@@ -116,6 +116,8 @@ app.get("/", function(req, res) {
   );
 });
 
+//Despite the name, /stats provides list data, rather than full breakdowns. May be added to later.
+
 app.get("/stats", function(req, res) {
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
@@ -142,6 +144,8 @@ app.get("/stats", function(req, res) {
   );
 
 });
+
+// /fullstats is used for the /stats page and reports comprehensive data on archive objects.
 
 app.get("/fullstats", function(req, res) {
   console.log("triggered /fullstats");
@@ -191,6 +195,45 @@ app.get("/fullstats", function(req, res) {
     }
   );
 });
+
+//Get data on objects. This is used to, for example, find all binaries.
+
+app.get("/objectsearch", function(req, res) {
+  var query = {};
+  if(req && req.query && req.query.type){
+    query[req.query.type] = true;
+  }
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  mongo.connect(
+    mongourl,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo
+        .collection("objectData")
+        .find(query, {})
+        .toArray(function(err, result) {
+          if (err) {
+            throw err;
+          }
+
+          if (result) {
+            res.send({ result });
+          }
+        });
+    }
+  );
+
+});
+
+
+/**********************************
+*********Operational Functions*****
+/**********************************/
+
 
 function addFile(filename, properties) {
   if (filename.indexOf("Dark") > 0) {

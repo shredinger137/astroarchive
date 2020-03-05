@@ -4,6 +4,7 @@ import './index.css';
 import { Route, BrowserRouter as Router } from 'react-router-dom'
 import App from './App';
 import Stats from './Stats';
+import Objects from './Objects';
 
 const routing = (
     <Router basename='/archive'>
@@ -13,6 +14,9 @@ const routing = (
         </Route>
         <Route path="/stats">
           <Stats />
+        </Route>
+        <Route path="/objects">
+          <Objects />
         </Route>
       </div>
     </Router>

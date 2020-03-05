@@ -2,3 +2,4 @@ module.exports.dbname = "gortarchive";
 module.exports.dbuser = "gtn";
 module.exports.dbpassword = "1qazXSW@3edc";
 module.exports.dbhost = "localhost";
+module.exports.imagepath = "/var/www/html/active/afh/archive/";

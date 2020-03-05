@@ -4,6 +4,8 @@ import { config } from "./config.js";
 import PageNumbers from "./components/PageNumbers.js";
 import Dates from "./components/Dates.js";
 
+/* eslint-disable eqeqeq */
+
 class App extends React.Component {
   constructor(props) {
     super(props);

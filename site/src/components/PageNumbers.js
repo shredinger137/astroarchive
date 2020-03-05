@@ -1,7 +1,7 @@
 import React from 'react';  
 import '../App.css';  
 
-
+/* eslint-disable eqeqeq */
 
 export default class PageNumbers extends React.Component {
     
