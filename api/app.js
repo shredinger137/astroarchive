@@ -699,12 +699,13 @@ function objectApiCall(object){
               databaseObject["otype_txt"] = JSON.parse(data).data[0][0];
               console.log(databaseObject);
 
-              //Check if it's a binary or variable, including
-              //cepheids in particular. 
+              //Check if it meets are quick search criteria, setting a boolean. 
 
               JSON.parse(data).data[0][0].includes("clipsing binary") ? databaseObject["binary"] = true : databaseObject["binary"] = false
               JSON.parse(data).data[0][0].includes("ariable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
               JSON.parse(data).data[0][0].includes("epheid") ? databaseObject["cepheid"] = true : databaseObject["cepheid"] = false
+              JSON.parse(data).data[0][0].includes("alaxy") ? databaseObject["galaxy"] = true : databaseObject["galaxy"] = false
+              
               //***********************************/
               writeObjectData(databaseObject);
               //***********************************/
