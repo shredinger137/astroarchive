@@ -1,3 +1,6 @@
+//TODO: This whole page. We're basically recreating the front page, but with proper queries.
+//After that we can edit stuff, and open the API to accept more variety.
+
 import React from "react";
 import { config } from "./config.js";
 import "./App.css";
@@ -5,14 +8,15 @@ import "./stats.css";
 
 /* eslint-disable eqeqeq */
 
-class Objects extends React.Component {
+class Advanced extends React.Component {
   state = {
-    items: [],
-    type: ""
+    numberOfFields: 1,
+    items: []
   };
 
   componentDidMount() {
     this.loadParams();
+    this.sendReq();
   }
 
   componentDidUpdate(prevprops, prevstate) {
@@ -32,17 +36,39 @@ class Objects extends React.Component {
 
   }
 
+  sendReq(){
+    var testObject = {
+      OBJECT: 'AP Her',
+      FILTER: 'V'
+    };
+    var queryString = Object.keys(testObject).map(key => key + '=' + testObject[key]).join('&');
+    console.log(queryString);
+    var fetchUrl = config.api + "/advanced?" + encodeURI(queryString);
+
+    fetch(fetchUrl)
+      .then(response => response.json())
+      .then(responseJson => {
+        if (responseJson.count != 0) {
+          this.setState({
+            items: responseJson.items,
+            totalPages: Math.round(responseJson.count / this.state.perpage),
+            totalItems: responseJson.count
+          });
+        } else {
+          this.setState({ items: [], totalPages: 0, totalItems: 0 });
+        }
+        if (this.state.totalPages < this.state.currentPage) {
+          this.setState({ currentPage: 1 });
+        }
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }
+
+
   loadPage() {
 
-      var statsUrl = config.api + "/objectsearch?type=" + this.state.type;
-      fetch(statsUrl).then(response => response.json()).then(responseJson => {
-        if(responseJson  && responseJson["result"]){
-           console.log(responseJson["result"]);
-          this.setState({items: responseJson["result"]})
-
-        }
-
-      });
   }
 
 //https://afh.sonoma.edu/archive/?page=2&perPage=150&object=AS%20Per
@@ -50,18 +76,44 @@ class Objects extends React.Component {
   render() {
     return (
       <div className="App">
-        <h1>GORT Archive: Objects</h1>
+        <h1>GORT Archive: Advanced Search</h1>
     <br />
-    <p>Objects of type: {this.state.type}</p>
-    <div>
     <table className="archiveTable">
-    {this.state.items.map(object => (
-            <tr><td><a href={"./?page=1&object=" + object.name}>{object.name}</a></td><td>{object.otype_txt}</td></tr>
-              ))}
-    </table>
-    </div>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Object</th>
+              <th>Date/Time (UTC)</th>
+              <th>CCD Temp (C)</th>
+              <th>Filter</th>
+              <th>Exposure Time (S)</th>
+              <th>User</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {this.state.items.map(items => (
+              <tr key={items.filename}>
+                <td>
+                  <a
+                    href={`http://gtn.sonoma.edu/archive/${items.filename}`}
+                    download
+                  >
+                    Download
+                  </a>
+                </td>
+                <td>{items.OBJECT}</td>
+                <td>{items.DATEOBS}</td>
+                <td>{items.CCDTEMP ? items.CCDTEMP.substr(0, 5) : ""}</td>
+                <td>{items.FILTER}</td>
+                <td>{Math.round(items.EXPTIME * 10) / 10}</td>
+                <td>{items.USER}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
      </div>
     );
   }
 }
-export default Objects;
+export default Advanced;

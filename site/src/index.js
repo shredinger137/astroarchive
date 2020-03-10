@@ -5,6 +5,7 @@ import { Route, BrowserRouter as Router } from 'react-router-dom'
 import App from './App';
 import Stats from './Stats';
 import Objects from './Objects';
+import Advanced from './Advanced';
 
 const routing = (
     <Router basename='/archive'>
@@ -17,6 +18,9 @@ const routing = (
         </Route>
         <Route path="/objects">
           <Objects />
+        </Route>
+        <Route path="/advanced">
+          <Advanced />
         </Route>
       </div>
     </Router>

@@ -7,6 +7,8 @@ var express = require("express");
 var app = express();
 var cron = require("node-cron");
 const https = require('https');
+bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
 
 //Call periodic functions to sync the database. Note that the data
@@ -145,10 +147,78 @@ app.get("/stats", function(req, res) {
 
 });
 
+//TODO: Create a method to take a general query (JSON type)
+//Destructure response to create database query.
+//This will replace to specified searches currently used in the main API.
+
+app.get("/advanced", function(req, res) {
+  var data = [];
+  var query = req.query;
+  console.log("query");
+  console.log(req.query);
+  var page = 0;
+  var perpage = 150;
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  mongo.connect(
+    mongourl,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function(err, db) {
+      if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo
+        .collection("gortarchive")
+        .find(req.query, {
+          projection: {
+            _id: 0,
+            filename: 1,
+            OBJECT: 1,
+            FILTER: 1,
+            DATEOBS: 1,
+            CCDTEMP: 1,
+            USER: 1,
+            EXPTIME: 1
+          }
+        })
+        .sort({ DATEOBS: -1 })
+        .skip(page * perpage)
+        .limit(perpage)
+        .toArray(function(err, result) {
+          if (err) {
+            console.log(err);
+          }
+          if (result) {
+            console.log(result);
+            if (result.length !== 0) {
+              data.push(result);
+              console.log(data);
+              dbo
+                .collection("gortarchive")
+                .find(query, {})
+                .count(function(err, countres) {
+                  if (err) {
+                    console.log(err);
+                  }
+                  if (countres) {
+                    res.send({ count: countres, items: result });
+                    
+                  }
+                });
+            } else {
+              res.send({ count: 0 });
+              console.log("zero");
+              
+            }
+          } else {console.log("no result");}
+        });
+    }
+  );
+});
+
 // /fullstats is used for the /stats page and reports comprehensive data on archive objects.
 
 app.get("/fullstats", function(req, res) {
-  console.log("triggered /fullstats");
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -267,7 +337,7 @@ function addFile(filename, properties) {
 
       dbo.collection("gortarchive").insertOne(properties, function(err, res) {
         if (err) throw err;
-        console.log("1 document inserted, " + filename);
+       // console.log("1 document inserted, " + filename);
         db.close();
       });
     }
@@ -402,7 +472,7 @@ function getEntries() {
           makeStats(result);
         });
         dbo.collection("gortarchive").createIndex( {DATEOBS: -1}, function(err, result){
-          console.log(result);
+       //   console.log(result);
         })
     }
   );
@@ -623,7 +693,7 @@ function makeStats(entries) {
 
 function getObjectData(){
 
-  console.log("Running getObjectData");
+ // console.log("Running getObjectData");
 
   mongo.connect(
     mongourl,
@@ -697,7 +767,7 @@ function objectApiCall(object){
           resp.on('end', () => {
             if(JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]){
               databaseObject["otype_txt"] = JSON.parse(data).data[0][0];
-              console.log(databaseObject);
+              //console.log(databaseObject);
 
               //Check if it meets are quick search criteria, setting a boolean. 
 
@@ -719,7 +789,8 @@ function objectApiCall(object){
           });
 
         
-        } else {console.log("response error on " + object);}
+        } else {// console.log("response error on " + object);
+      }
       });
    //this error is for the first api call 
   }).on("error", (err) => {
