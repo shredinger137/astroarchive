@@ -17,7 +17,6 @@ class Objects extends React.Component {
 
   componentDidUpdate(prevprops, prevstate) {
     if(prevstate.type != this.state.type){
-      console.log(prevprops.type);
       this.loadPage();
   }
   }
@@ -25,7 +24,7 @@ class Objects extends React.Component {
   loadParams(){
     const params = new URLSearchParams(window.location.search);
     if(params.get("type")){
-      console.log(params.get("type"));
+      //console.log(params.get("type"));
       this.setState({type: params.get("type")});
     }
     this.loadPage();
@@ -36,7 +35,7 @@ class Objects extends React.Component {
 
       var statsUrl = config.api + "/objectsearch?type=" + this.state.type;
       fetch(statsUrl).then(response => response.json()).then(responseJson => {
-        if(responseJson  && responseJson["result"]){
+        if(responseJson  && responseJson["result"] && responseJson["result"].length && responseJson["result"].length > 0){
            console.log(responseJson["result"]);
           this.setState({items: responseJson["result"]})
 
