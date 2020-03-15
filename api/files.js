@@ -55,7 +55,7 @@ app.get("/", function(req, res) {
     query["OBJECT"] = req.query.object;
   }
 
-  console.log("File query: " + query);
+  console.log(query);
 
   mongo.connect(
     mongourl,
