@@ -41,17 +41,21 @@ app.get("/", function(req, res) {
     if (req.query.dateTo) {
       query["DATEOBS"] = { $lte: +req.query.dateTo };
     }
+  }
+
     if (req.query.user) {
       query["USER"] = req.query.user;
     }
     if (req.query.filter) {
       query["FILTER"] = req.query.filter;
     }
-  }
+  
 
   if (req.query.object) {
     query["OBJECT"] = req.query.object;
   }
+
+  console.log("File query: " + query);
 
   mongo.connect(
     mongourl,

@@ -708,7 +708,10 @@ function getObjectData(){
           { projection: { _id: 0, objects: 1} }
         )
         .toArray(function(err, result) {
-            var objectList = result[0]['objects'];
+            if(result && result[0] && result[0]['objects']){
+              var objectList = result[0]['objects']; } else {
+              var objectList = [];
+              }
             for(object of objectList){
               objectApiCall(object)
             }

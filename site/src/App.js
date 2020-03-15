@@ -297,7 +297,8 @@ class App extends React.Component {
 
   openDownload(linkString) {
     var download = config.files + "/downloadAll?null=null" + linkString;
-    window.open(download);
+    //window.open(download);
+    console.log(download);
   }
 
   render() {
