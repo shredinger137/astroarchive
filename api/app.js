@@ -14,11 +14,10 @@ app.use(bodyParser.json());
 //Call periodic functions to sync the database. Note that the data
 //is assumed to be there, we do that part of the sync separately.
 
-cron.schedule("* 5 * * *", () => {
+cron.schedule("* */2 * * *", () => {
   getEntries();
   getObjectData();
-  
-
+  console.log("Running cron");
 });
 
 /**********************************
@@ -29,12 +28,12 @@ app.get("/", function(req, res) {
   var data = [];
   var page = 0;
 
-  //perpage should probably start empty
   var perpage = 100000;
   res.statusCode = 200;
   var query = {};
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
+
   if (req.query.page) {
     var page = req.query.page - 1;
     if (req.query.perpage) {
@@ -45,7 +44,9 @@ app.get("/", function(req, res) {
   if (req.query.fullquery){
     //take full query parameters, decode, make an object
     //this doesn't currently have a matching bit on the other side
-    //and exists entirely for testing
+    //and exists entirely for testing. In the future, switching to
+    //generic queries is the best way to handle this. Dates still need
+    //to be handled separately, being a range. 
   }
 
   if (req.query.dateFrom && req.query.dateTo) {
@@ -314,7 +315,7 @@ function addFile(filename, properties) {
   }
 
   //This part is specific to how we have directories set up. All captured images
-  //are under ./img/$USER/dates/file.fts, and things under ACP were captured directly
+  //are under ./img/$USER/directories/file.fts, and things under ACP were captured directly
   //from the telescope without using the scheduling software. The lines under here
   //should be removed if you're using a header property instead, or changed for different
   //organizational plans.
