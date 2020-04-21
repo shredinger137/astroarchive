@@ -12,7 +12,7 @@ app.get("/", function(req, res) {
 
   var path = (__dirname).replace(/api$/, '');
   var path = config.imagepath;
-  //console.log("Path: " + path);
+  console.log("Path: " + path);
   var name = Math.random().toString(36).substring(2, 15);
   var file = __dirname + "/ziptemp/" + name + ".zip";
 

@@ -14,7 +14,7 @@ app.use(bodyParser.json());
 //Call periodic functions to sync the database. Note that the data
 //is assumed to be there, we do that part of the sync separately.
 
-cron.schedule("* */2 * * *", () => {
+cron.schedule("* 2 * * *", () => {
   getEntries();
   getObjectData();
   console.log("Running cron");
