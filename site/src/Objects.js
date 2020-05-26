@@ -32,7 +32,6 @@ class Objects extends React.Component {
   }
 
   loadPage() {
-
       var statsUrl = config.api + "/objectsearch?type=" + this.state.type;
       fetch(statsUrl).then(response => response.json()).then(responseJson => {
         if(responseJson  && responseJson["result"] && responseJson["result"].length && responseJson["result"].length > 0){

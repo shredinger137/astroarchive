@@ -132,24 +132,24 @@ app.get("/", function (req, res) {
 //Despite the name, /stats provides list data, rather than full breakdowns. May be added to later.
 
 app.get("/stats", function (req, res) {
-  if(dbConnection){
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  if (dbConnection) {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Access-Control-Allow-Origin", "*");
 
-  var dbo = dbConnection;
-  dbo
-    .collection("stats")
-    .find({ name: "lists" }, {})
-    .toArray(function (err, result) {
-      if (err) {
-        throw err;
-      }
+    var dbo = dbConnection;
+    dbo
+      .collection("stats")
+      .find({ name: "lists" }, {})
+      .toArray(function (err, result) {
+        if (err) {
+          throw err;
+        }
 
-      if (result) {
-        res.send({ result });
-      }
-    });
+        if (result) {
+          res.send({ result });
+        }
+      });
 
 
   }
@@ -232,34 +232,36 @@ app.get("/fullstats", function (req, res) {
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  var dbo = dbConnection;
-  dbo
-    .collection("stats")
-    .findOne({ name: "reporting" }, { projection: { _id: 0 } }, function (err, result) {
-      if (err) {
-        throw err;
-      }
-      if (result) {
-        dbConnection
-          .collection("objectData")
-          .find({}, { projection: { _id: 0 } })
-          .toArray(function (err, objectData) {
-            if (err) {
-              throw err;
-            }
+  if (dbConnection) {
+    var dbo = dbConnection;
+    dbo
+      .collection("stats")
+      .findOne({ name: "reporting" }, { projection: { _id: 0 } }, function (err, result) {
+        if (err) {
+          throw err;
+        }
+        if (result) {
+          dbConnection
+            .collection("objectData")
+            .find({}, { projection: { _id: 0 } })
+            .toArray(function (err, objectData) {
+              if (err) {
+                throw err;
+              }
 
-            if (objectData) {
-              var totalResult = {};
-              totalResult["objectData"] = objectData;
-              totalResult["fullStats"] = result;
-              res.send(totalResult);
-            } else { res.send("object data failed"); }
-          });
+              if (objectData) {
+                var totalResult = {};
+                totalResult["objectData"] = objectData;
+                totalResult["fullStats"] = result;
+                res.send(totalResult);
+              } else { res.send("object data failed"); }
+            });
 
 
-        //  res.send({ result });
-      }
-    });
+          //  res.send({ result });
+        }
+      });
+  }
 });
 
 //Get data on objects. This is used to, for example, find all binaries.
