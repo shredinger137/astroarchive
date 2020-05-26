@@ -9,12 +9,27 @@ var cron = require("node-cron");
 const https = require('https');
 bodyParser = require('body-parser');
 app.use(bodyParser.json());
+var MongoClient = require('mongodb').MongoClient, Server = require('mongodb').Server;
+
+//TODO: Replace previous connect infrastructure with reused db instance,
+//which initiates a single connection pool below. This will prevent threads
+//from growing uncontrolled, and eventually crashing.
+
+var dbConnection = null;
+
+
+MongoClient.connect('mongodb://localhost:27017/', { useUnifiedTopology: true, useNewUrlParser: true }, function (err, client) {
+  if (err) { console.error(err) }
+  dbConnection = client.db('gortarchive') // once connected, assign the connection to the global variable
+  connectedToDatabase = true;
+  console.log("Connected");
+})
 
 
 //Call periodic functions to sync the database. Note that the data
 //is assumed to be there, we do that part of the sync separately.
 
-cron.schedule("* 2 * * *", () => {
+cron.schedule("* * * * *", () => {
   getEntries();
   getObjectData();
   console.log("Running cron");
@@ -24,7 +39,7 @@ cron.schedule("* 2 * * *", () => {
 ********* Routes *****************/
 
 
-app.get("/", function(req, res) {
+app.get("/", function (req, res) {
   var data = [];
   var page = 0;
 
@@ -41,7 +56,7 @@ app.get("/", function(req, res) {
     }
   }
 
-  if (req.query.fullquery){
+  if (req.query.fullquery) {
     //take full query parameters, decode, make an object
     //this doesn't currently have a matching bit on the other side
     //and exists entirely for testing. In the future, switching to
@@ -57,102 +72,95 @@ app.get("/", function(req, res) {
     }
     if (req.query.dateTo) {
       query["DATEOBS"] = { $lte: +req.query.dateTo };
-    } }
-    if (req.query.user) {
-      query["USER"] = req.query.user;
     }
-    if (req.query.filter) {
-      query["FILTER"] = req.query.filter;
-    }
-  
+  }
+  if (req.query.user) {
+    query["USER"] = req.query.user;
+  }
+  if (req.query.filter) {
+    query["FILTER"] = req.query.filter;
+  }
 
   if (req.query.object) {
     query["OBJECT"] = req.query.object;
   }
 
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("gortarchive")
-        .find(query, {
-          projection: {
-            _id: 0,
-            filename: 1,
-            OBJECT: 1,
-            FILTER: 1,
-            DATEOBS: 1,
-            CCDTEMP: 1,
-            USER: 1,
-            EXPTIME: 1
+  if (dbConnection) {
+
+    dbConnection
+      .collection("gortarchive")
+      .find(query, {
+        projection: {
+          _id: 0,
+          filename: 1,
+          OBJECT: 1,
+          FILTER: 1,
+          DATEOBS: 1,
+          CCDTEMP: 1,
+          USER: 1,
+          EXPTIME: 1
+        }
+      })
+      .sort({ DATEOBS: -1 })
+      .skip(page * perpage)
+      .limit(perpage)
+      .toArray(function (err, result) {
+        if (err) {
+          console.log(err);
+        }
+        if (result) {
+          if (result.length !== 0) {
+            data.push(result);
+            dbConnection
+              .collection("gortarchive")
+              .find(query, {})
+              .count(function (err, countres) {
+                if (err) {
+                }
+                if (countres) {
+                  res.send({ count: countres, items: result });
+                }
+              });
+          } else {
+            res.send({ count: 0 });
           }
-        })
-        .sort({ DATEOBS: -1 })
-        .skip(page * perpage)
-        .limit(perpage)
-        .toArray(function(err, result) {
-          if (err) {
-            console.log(err);
-          }
-          if (result) {
-            if (result.length !== 0) {
-              data.push(result);
-              dbo
-                .collection("gortarchive")
-                .find(query, {})
-                .count(function(err, countres) {
-                  if (err) {
-                  }
-                  if (countres) {
-                    res.send({ count: countres, items: result });
-                  }
-                });
-            } else {
-              res.send({ count: 0 });
-            }
-          }
-        });
-    }
-  );
+        }
+      });
+  }
 });
 
 //Despite the name, /stats provides list data, rather than full breakdowns. May be added to later.
 
-app.get("/stats", function(req, res) {
+app.get("/stats", function (req, res) {
+  if(dbConnection){
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("stats")
-        .find({name: "lists"}, {})
-        .toArray(function(err, result) {
-          if (err) {
-            throw err;
-          }
 
-          if (result) {
-            res.send({ result });
-          }
-        });
-    }
-  );
+  var dbo = dbConnection;
+  dbo
+    .collection("stats")
+    .find({ name: "lists" }, {})
+    .toArray(function (err, result) {
+      if (err) {
+        throw err;
+      }
 
+      if (result) {
+        res.send({ result });
+      }
+    });
+
+
+  }
 });
+
 
 //TODO: Create a method to take a general query (JSON type)
 //Destructure response to create database query.
 //This will replace to specified searches currently used in the main API.
 
-app.get("/advanced", function(req, res) {
+app.get("/advanced", function (req, res) {
   var data = [];
   var query = req.query;
   console.log("query");
@@ -165,7 +173,7 @@ app.get("/advanced", function(req, res) {
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       dbo
@@ -185,7 +193,7 @@ app.get("/advanced", function(req, res) {
         .sort({ DATEOBS: -1 })
         .skip(page * perpage)
         .limit(perpage)
-        .toArray(function(err, result) {
+        .toArray(function (err, result) {
           if (err) {
             console.log(err);
           }
@@ -197,21 +205,21 @@ app.get("/advanced", function(req, res) {
               dbo
                 .collection("gortarchive")
                 .find(query, {})
-                .count(function(err, countres) {
+                .count(function (err, countres) {
                   if (err) {
                     console.log(err);
                   }
                   if (countres) {
                     res.send({ count: countres, items: result });
-                    
+
                   }
                 });
             } else {
               res.send({ count: 0 });
               console.log("zero");
-              
+
             }
-          } else {console.log("no result");}
+          } else { console.log("no result"); }
         });
     }
   );
@@ -219,59 +227,46 @@ app.get("/advanced", function(req, res) {
 
 // /fullstats is used for the /stats page and reports comprehensive data on archive objects.
 
-app.get("/fullstats", function(req, res) {
+app.get("/fullstats", function (req, res) {
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("stats")
-        .findOne({name: "reporting"}, {projection: { _id: 0}}, function(err, result)
-         {
-          if (err) {
-            throw err;
-          }
-          if (result) {
-            mongo.connect(
-              mongourl,
-              { useNewUrlParser: true, useUnifiedTopology: true },
-              function(err, db) {
-                if (err) throw err;
-                var dbo = db.db("gortarchive");
-                dbo
-                  .collection("objectData")
-                  .find({}, {projection: { _id: 0}})
-                  .toArray(function(err, objectData) {
-                    if (err) {
-                      throw err;
-                    }
-          
-                    if (objectData) {
-                      var totalResult = {};
-                      totalResult["objectData"] = objectData;
-                      totalResult["fullStats"] = result;
-                      res.send( totalResult );
-                    } else {res.send("object data failed");}
-                  });
-              }
-            );
-          //  res.send({ result });
-          }
-        });
-    }
-  );
+
+  var dbo = dbConnection;
+  dbo
+    .collection("stats")
+    .findOne({ name: "reporting" }, { projection: { _id: 0 } }, function (err, result) {
+      if (err) {
+        throw err;
+      }
+      if (result) {
+        dbConnection
+          .collection("objectData")
+          .find({}, { projection: { _id: 0 } })
+          .toArray(function (err, objectData) {
+            if (err) {
+              throw err;
+            }
+
+            if (objectData) {
+              var totalResult = {};
+              totalResult["objectData"] = objectData;
+              totalResult["fullStats"] = result;
+              res.send(totalResult);
+            } else { res.send("object data failed"); }
+          });
+
+
+        //  res.send({ result });
+      }
+    });
 });
 
 //Get data on objects. This is used to, for example, find all binaries.
 
-app.get("/objectsearch", function(req, res) {
+app.get("/objectsearch", function (req, res) {
   var query = {};
-  if(req && req.query && req.query.type){
+  if (req && req.query && req.query.type) {
     query[req.query.type] = true;
   }
   res.statusCode = 200;
@@ -280,13 +275,13 @@ app.get("/objectsearch", function(req, res) {
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       dbo
         .collection("objectData")
         .find(query, {})
-        .toArray(function(err, result) {
+        .toArray(function (err, result) {
           if (err) {
             throw err;
           }
@@ -331,14 +326,14 @@ function addFile(filename, properties) {
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       properties["filename"] = filename;
 
-      dbo.collection("gortarchive").insertOne(properties, function(err, res) {
+      dbo.collection("gortarchive").insertOne(properties, function (err, res) {
         if (err) throw err;
-       // console.log("1 document inserted, " + filename);
+        // console.log("1 document inserted, " + filename);
         db.close();
       });
     }
@@ -349,11 +344,11 @@ function deleteEntry(filename) {
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       var myquery = { filename: filename };
-      dbo.collection("gortarchive").deleteOne(myquery, function(err, obj) {
+      dbo.collection("gortarchive").deleteOne(myquery, function (err, obj) {
         if (err) throw err;
         db.close();
       });
@@ -427,16 +422,16 @@ async function readHeader(filename, readable) {
 
 function getFiles(dir, done) {
   var results = [];
-  fs.readdir(dir, function(err, list) {
+  fs.readdir(dir, function (err, list) {
     if (err) return done(err);
     var pending = list.length;
     if (!pending) done(null, results);
     if (!pending) return done(null, results);
-    list.forEach(function(file) {
+    list.forEach(function (file) {
       file = path.resolve(dir, file);
-      fs.stat(file, function(err, stat) {
+      fs.stat(file, function (err, stat) {
         if (stat && stat.isDirectory()) {
-          getFiles(file, function(err, res) {
+          getFiles(file, function (err, res) {
             results = results.concat(res);
             if (!--pending) done(null, results);
           });
@@ -453,7 +448,7 @@ function getEntries() {
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       dbo
@@ -462,7 +457,7 @@ function getEntries() {
           {},
           { projection: { _id: 0, filename: 1, OBJECT: 1, USER: 1, FILTER: 1, DATEOBS: 1 } }
         )
-        .toArray(function(err, result) {
+        .toArray(function (err, result) {
           let tempresult = [];
           for (var i = 0; i < result.length; i++) {
             tempresult.push(result[i]["filename"]);
@@ -472,15 +467,15 @@ function getEntries() {
           syncEntries(tempresult);
           makeStats(result);
         });
-        dbo.collection("gortarchive").createIndex( {DATEOBS: -1}, function(err, result){
-       //   console.log(result);
-        })
+      dbo.collection("gortarchive").createIndex({ DATEOBS: -1 }, function (err, result) {
+        //   console.log(result);
+      })
     }
   );
 }
 
 function syncEntries(entries) {
-  getFiles("./img/", function(err, results) {
+  getFiles("./img/", function (err, results) {
     if (err) throw err;
     for (var i = 0; i < results.length; i++) {
       results[i] = results[i].replace(/^(.*?)\img/, "img");
@@ -574,7 +569,7 @@ function makeStats(entries) {
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       dbo
@@ -583,105 +578,106 @@ function makeStats(entries) {
     }
   );
 
-    //reporting stats
-    var maxDate = 0;
-    var minDate = 0;
+  //reporting stats
+  var maxDate = 0;
+  var minDate = 0;
 
-    var totalFiles = entries.length;
-    var objectImages = 0;    
-    for (var i = 0; i < entries.length; i++) {
+  var totalFiles = entries.length;
+  var objectImages = 0;
+  for (var i = 0; i < entries.length; i++) {
 
 
-      if(entries[i] && entries[i]["OBJECT"] && entries[i]["FILTER"]){
-        objectImages += 1;
+    if (entries[i] && entries[i]["OBJECT"] && entries[i]["FILTER"]) {
+      objectImages += 1;
 
-        //Object total, filter totals
-        var objectName = entries[i]["OBJECT"];
-        var filter = entries[i]["FILTER"];
-        
-        if(!objectsWithFilter[objectName]){
-          objectsWithFilter[objectName] = {};
-        }
-        
-        if(objectsWithFilter[objectName][filter]){
-          objectsWithFilter[objectName][filter] += 1; 
-        } else {objectsWithFilter[objectName][filter] = 1;}
+      //Object total, filter totals
+      var objectName = entries[i]["OBJECT"];
+      var filter = entries[i]["FILTER"];
 
-        if(objectsWithFilter[objectName]["total"]){
-          objectsWithFilter[objectName]["total"] += 1; 
-        } else {objectsWithFilter[objectName]["total"] = 1;}
-      }
-      //Accounting for calibration images, which don't have filters
-
-      if(entries[i] && entries[i]["OBJECT"] && !entries[i]["FILTER"]){
-        var objectName = entries[i]["OBJECT"];
-        if(!objectsWithFilter[objectName]){
-          objectsWithFilter[objectName] = {};
-        }
-        if(objectsWithFilter[objectName]["total"]){
-          objectsWithFilter[objectName]["total"] += 1; 
-        } else {objectsWithFilter[objectName]["total"] = 1;}
+      if (!objectsWithFilter[objectName]) {
+        objectsWithFilter[objectName] = {};
       }
 
-      //User stats. I know it's tempting to combine all of this into one block,
-      //but don't. Some valid entries don't have users, or are otherwise incomplete.
-      //Being overly verbose here will let us capture all cases.
+      if (objectsWithFilter[objectName][filter]) {
+        objectsWithFilter[objectName][filter] += 1;
+      } else { objectsWithFilter[objectName][filter] = 1; }
 
-      if(entries[i] && entries[i]["USER"]){
-        if(usersActivity[entries[i]["USER"]]){
-          usersActivity[entries[i]["USER"]] += 1;
-        } else {usersActivity[entries[i]["USER"]] = 1; }
+      if (objectsWithFilter[objectName]["total"]) {
+        objectsWithFilter[objectName]["total"] += 1;
+      } else { objectsWithFilter[objectName]["total"] = 1; }
+    }
+    //Accounting for calibration images, which don't have filters
+
+    if (entries[i] && entries[i]["OBJECT"] && !entries[i]["FILTER"]) {
+      var objectName = entries[i]["OBJECT"];
+      if (!objectsWithFilter[objectName]) {
+        objectsWithFilter[objectName] = {};
       }
- 
-      //Total activity by date
+      if (objectsWithFilter[objectName]["total"]) {
+        objectsWithFilter[objectName]["total"] += 1;
+      } else { objectsWithFilter[objectName]["total"] = 1; }
+    }
 
-      if(entries[i] && entries[i]["DATEOBS"]){
-        if(entries[i]["DATEOBS"] < minDate || minDate == 0){
-          minDate = entries[i]["DATEOBS"];
-        }
-        if(entries[i]["DATEOBS"] > maxDate){
-          maxDate = entries[i]["DATEOBS"]
-        }
+    //User stats. I know it's tempting to combine all of this into one block,
+    //but don't. Some valid entries don't have users, or are otherwise incomplete.
+    //Being overly verbose here will let us capture all cases.
 
-        var date = new Date(entries[i]["DATEOBS"]);
-        var month = date.getMonth() + 1;
-        var year = date.getFullYear();
-        var dateindex = month + "-" + year;
-        if (totalActivity[dateindex]) {
-          totalActivity[dateindex]++;
-        } else {
-          totalActivity[dateindex] = 1;
-        }
+    if (entries[i] && entries[i]["USER"]) {
+      if (usersActivity[entries[i]["USER"]]) {
+        usersActivity[entries[i]["USER"]] += 1;
+      } else { usersActivity[entries[i]["USER"]] = 1; }
+    }
 
-        
-    }}
- 
-      var fullStats = {
-        name: "reporting",
-        objects: objectsWithFilter,
-        users: usersActivity,
-        totalActivity: totalActivity,
-        activityOverTime: activityOverTime,
-        totals: {
-          files: totalFiles,
-          objectImages: objectImages
-        },
-        maxDate: maxDate,
-        minDate: minDate
-      };
-     
-      mongo.connect(
-        mongourl,
-        { useNewUrlParser: true, useUnifiedTopology: true },
-        function(err, db) {
-          if (err) throw err;
-          var dbo = db.db("gortarchive");
-          dbo
-            .collection("stats")
-            .replaceOne({ name: "reporting" }, fullStats, { upsert: true });
-        }
-      );
-    
+    //Total activity by date
+
+    if (entries[i] && entries[i]["DATEOBS"]) {
+      if (entries[i]["DATEOBS"] < minDate || minDate == 0) {
+        minDate = entries[i]["DATEOBS"];
+      }
+      if (entries[i]["DATEOBS"] > maxDate) {
+        maxDate = entries[i]["DATEOBS"]
+      }
+
+      var date = new Date(entries[i]["DATEOBS"]);
+      var month = date.getMonth() + 1;
+      var year = date.getFullYear();
+      var dateindex = month + "-" + year;
+      if (totalActivity[dateindex]) {
+        totalActivity[dateindex]++;
+      } else {
+        totalActivity[dateindex] = 1;
+      }
+
+
+    }
+  }
+
+  var fullStats = {
+    name: "reporting",
+    objects: objectsWithFilter,
+    users: usersActivity,
+    totalActivity: totalActivity,
+    activityOverTime: activityOverTime,
+    totals: {
+      files: totalFiles,
+      objectImages: objectImages
+    },
+    maxDate: maxDate,
+    minDate: minDate
+  };
+
+  mongo.connect(
+    mongourl,
+    { useNewUrlParser: true, useUnifiedTopology: true },
+    function (err, db) {
+      if (err) throw err;
+      var dbo = db.db("gortarchive");
+      dbo
+        .collection("stats")
+        .replaceOne({ name: "reporting" }, fullStats, { upsert: true });
+    }
+  );
+
 }
 
 //Restructure this to use callbacks, so that the object list is fed into a function
@@ -692,30 +688,31 @@ function makeStats(entries) {
 //function after the data is pulled, run objectApiCall on each one. This 
 //will update the database with the first round of information, object type.
 
-function getObjectData(){
+function getObjectData() {
 
- // console.log("Running getObjectData");
+  // console.log("Running getObjectData");
 
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       dbo
         .collection("stats")
         .find(
-          {name: "lists"},
-          { projection: { _id: 0, objects: 1} }
+          { name: "lists" },
+          { projection: { _id: 0, objects: 1 } }
         )
-        .toArray(function(err, result) {
-            if(result && result[0] && result[0]['objects']){
-              var objectList = result[0]['objects']; } else {
-              var objectList = [];
-              }
-            for(object of objectList){
-              objectApiCall(object)
-            }
+        .toArray(function (err, result) {
+          if (result && result[0] && result[0]['objects']) {
+            var objectList = result[0]['objects'];
+          } else {
+            var objectList = [];
+          }
+          for (object of objectList) {
+            objectApiCall(object)
+          }
           if (err) throw err;
           db.close();
 
@@ -730,24 +727,24 @@ function getObjectData(){
 //If you want to get more detailed information for later, put another call using the same query system 
 //into the next nested area. Again. Sorry.
 
-function objectApiCall(object){
+function objectApiCall(object) {
   var databaseObject = {};
   databaseObject["name"] = object;
   var url = "https://simbad.u-strasbg.fr/simbad/sim-tap/sync?request=doQuery&lang=adql&format=json&query=";
   var query = encodeURI(`SELECT otype FROM basic JOIN ident ON oid = oidref WHERE id = '` + object + `';`);
   https.get(url + query, (resp) => {
     let data = '';
-  
+
     // A chunk of data has been recieved.
     resp.on('data', (chunk) => {
       data += chunk;
     });
-  
+
     // The whole response has been received. Add 'otype' to the database object and start the
     // next step, where we find out what it means.
 
     resp.on('end', () => {
-      if(JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]){
+      if (JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]) {
         var type = JSON.parse(data).data[0][0];
         databaseObject["otype"] = type;
         //call the next query, which tells us what the number means
@@ -755,12 +752,12 @@ function objectApiCall(object){
         var query = encodeURI(`SELECT otype_longname, otype_shortname FROM otypedef WHERE otype = 0` + type + `;`);
         https.get(url + query, (resp) => {
           let data = '';
-        
+
           // A chunk of data has been recieved.
           resp.on('data', (chunk) => {
             data += chunk;
           });
-        
+
           //The whole response has been received. Add 'otype_txt' to the object and print for debug.
           //Since this is our end point, we're going to call the write method. Move this if you nest
           //an additional call later.
@@ -769,7 +766,7 @@ function objectApiCall(object){
           //component for those two classes.
 
           resp.on('end', () => {
-            if(JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]){
+            if (JSON.parse(data) && JSON.parse(data).data && JSON.parse(data).data[0] && JSON.parse(data).data[0][0]) {
               databaseObject["otype_txt"] = JSON.parse(data).data[0][0];
               //console.log(databaseObject);
 
@@ -779,34 +776,34 @@ function objectApiCall(object){
               JSON.parse(data).data[0][0].includes("ariable") ? databaseObject["variable"] = true : databaseObject["variable"] = false
               JSON.parse(data).data[0][0].includes("epheid") ? databaseObject["cepheid"] = true : databaseObject["cepheid"] = false
               JSON.parse(data).data[0][0].includes("alaxy") ? databaseObject["galaxy"] = true : databaseObject["galaxy"] = false
-              
+
               //***********************************/
               writeObjectData(databaseObject);
               //***********************************/
 
             }
           });
-        
-          //this error is for the second api call
-          }).on("error", (err) => {
-            console.log("Error: " + err.message);
-          });
 
-        
-        } else {// console.log("response error on " + object);
+          //this error is for the second api call
+        }).on("error", (err) => {
+          console.log("Error: " + err.message);
+        });
+
+
+      } else {// console.log("response error on " + object);
       }
-      });
-   //this error is for the first api call 
+    });
+    //this error is for the first api call 
   }).on("error", (err) => {
     console.log("Error: " + err.message);
   });
 }
 
-function writeObjectData(objectData){
+function writeObjectData(objectData) {
   mongo.connect(
     mongourl,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    function(err, db) {
+    function (err, db) {
       if (err) throw err;
       var dbo = db.db("gortarchive");
       dbo

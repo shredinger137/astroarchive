@@ -33,7 +33,7 @@ export default class PageNumbers extends React.Component {
            <li>
            {this.props.totalPages > 3 ? 
             this.props.currentPage == this.props.totalPages ? 
-              "\u003E" :<a href={"./?page=" + (this.props.currentPage - 1) + this.props.linkString} className="pagelink">&gt;</a> : ''}
+              "\u003E" :<a href={"./?page=" + (+this.props.currentPage + 1) + this.props.linkString} className="pagelink">&gt;</a> : ''}
            </li>
         
            </ul>
