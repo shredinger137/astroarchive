@@ -11,18 +11,18 @@ bodyParser = require('body-parser');
 app.use(bodyParser.json());
 var MongoClient = require('mongodb').MongoClient, Server = require('mongodb').Server;
 
-//TODO: Replace previous connect infrastructure with reused db instance,
-//which initiates a single connection pool below. This will prevent threads
-//from growing uncontrolled, and eventually crashing.
-
 var dbConnection = null;
-
 
 MongoClient.connect('mongodb://localhost:27017/', { useUnifiedTopology: true, useNewUrlParser: true }, function (err, client) {
   if (err) { console.error(err) }
   dbConnection = client.db('gortarchive') // once connected, assign the connection to the global variable
   connectedToDatabase = true;
-  console.log("Connected");
+  console.log("Connected to database");
+
+  //Sync database on app restart
+
+  getEntries(); 
+  getObjectData();
 })
 
 
@@ -132,11 +132,12 @@ app.get("/", function (req, res) {
 //Despite the name, /stats provides list data, rather than full breakdowns. May be added to later.
 
 app.get("/stats", function (req, res) {
-  if (dbConnection) {
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/plain");
-    res.setHeader("Access-Control-Allow-Origin", "*");
 
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  if (dbConnection) {
     var dbo = dbConnection;
     dbo
       .collection("stats")
@@ -150,8 +151,6 @@ app.get("/stats", function (req, res) {
           res.send({ result });
         }
       });
-
-
   }
 });
 
@@ -170,59 +169,57 @@ app.get("/advanced", function (req, res) {
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("gortarchive")
-        .find(req.query, {
-          projection: {
-            _id: 0,
-            filename: 1,
-            OBJECT: 1,
-            FILTER: 1,
-            DATEOBS: 1,
-            CCDTEMP: 1,
-            USER: 1,
-            EXPTIME: 1
-          }
-        })
-        .sort({ DATEOBS: -1 })
-        .skip(page * perpage)
-        .limit(perpage)
-        .toArray(function (err, result) {
-          if (err) {
-            console.log(err);
-          }
-          if (result) {
-            console.log(result);
-            if (result.length !== 0) {
-              data.push(result);
-              console.log(data);
-              dbo
-                .collection("gortarchive")
-                .find(query, {})
-                .count(function (err, countres) {
-                  if (err) {
-                    console.log(err);
-                  }
-                  if (countres) {
-                    res.send({ count: countres, items: result });
+  if (dbConnection) {
 
-                  }
-                });
-            } else {
-              res.send({ count: 0 });
-              console.log("zero");
+    var dbo = dbConnection
+    dbo
+      .collection("gortarchive")
+      .find(req.query, {
+        projection: {
+          _id: 0,
+          filename: 1,
+          OBJECT: 1,
+          FILTER: 1,
+          DATEOBS: 1,
+          CCDTEMP: 1,
+          USER: 1,
+          EXPTIME: 1
+        }
+      })
+      .sort({ DATEOBS: -1 })
+      .skip(page * perpage)
+      .limit(perpage)
+      .toArray(function (err, result) {
+        if (err) {
+          console.log(err);
+        }
+        if (result) {
+          console.log(result);
+          if (result.length !== 0) {
+            data.push(result);
+            console.log(data);
+            dbo
+              .collection("gortarchive")
+              .find(query, {})
+              .count(function (err, countres) {
+                if (err) {
+                  console.log(err);
+                }
+                if (countres) {
+                  res.send({ count: countres, items: result });
 
-            }
-          } else { console.log("no result"); }
-        });
-    }
-  );
+                }
+              });
+          } else {
+            res.send({ count: 0 });
+            console.log("zero");
+
+          }
+        } else { console.log("no result"); }
+      });
+
+
+  }
 });
 
 // /fullstats is used for the /stats page and reports comprehensive data on archive objects.
@@ -255,8 +252,7 @@ app.get("/fullstats", function (req, res) {
                 totalResult["fullStats"] = result;
                 res.send(totalResult);
               } else { res.send("object data failed"); }
-            });
-
+            })
 
           //  res.send({ result });
         }
@@ -274,32 +270,29 @@ app.get("/objectsearch", function (req, res) {
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("objectData")
-        .find(query, {})
-        .toArray(function (err, result) {
-          if (err) {
-            throw err;
-          }
+  if (dbConnection) {
 
-          if (result) {
-            res.send({ result });
-          }
-        });
-    }
-  );
+    var dbo = dbConnection;
+    dbo
+      .collection("objectData")
+      .find(query, {})
+      .toArray(function (err, result) {
+        if (err) {
+          throw err;
+        }
+
+        if (result) {
+          res.send({ result });
+        }
+      });
+
+  }
 
 });
 
 
 /**********************************
-*********Operational Functions*****
+********* Functions ***************
 /**********************************/
 
 
@@ -325,37 +318,28 @@ function addFile(filename, properties) {
     properties["USER"] = "GORT Staff";
   }
 
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      properties["filename"] = filename;
+  if (dbConnection) {
 
-      dbo.collection("gortarchive").insertOne(properties, function (err, res) {
-        if (err) throw err;
-        // console.log("1 document inserted, " + filename);
-        db.close();
-      });
-    }
-  );
+    var dbo = dbConnection;
+    properties["filename"] = filename;
+
+    dbo.collection("gortarchive").insertOne(properties, function (err, res) {
+      if (err) throw err;
+      // console.log("1 document inserted, " + filename);
+    });
+
+
+  }
 }
 
 function deleteEntry(filename) {
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
+  if (dbConnection) {
+    var dbo = dbConnection;
+    var myquery = { filename: filename };
+    dbo.collection("gortarchive").deleteOne(myquery, function (err, obj) {
       if (err) throw err;
-      var dbo = db.db("gortarchive");
-      var myquery = { filename: filename };
-      dbo.collection("gortarchive").deleteOne(myquery, function (err, obj) {
-        if (err) throw err;
-        db.close();
-      });
-    }
-  );
+    });
+  }
 }
 
 function callAdd(filename) {
@@ -447,34 +431,29 @@ function getFiles(dir, done) {
 }
 
 function getEntries() {
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("gortarchive")
-        .find(
-          {},
-          { projection: { _id: 0, filename: 1, OBJECT: 1, USER: 1, FILTER: 1, DATEOBS: 1 } }
-        )
-        .toArray(function (err, result) {
-          let tempresult = [];
-          for (var i = 0; i < result.length; i++) {
-            tempresult.push(result[i]["filename"]);
-          }
-          if (err) throw err;
-          db.close();
-          syncEntries(tempresult);
-          makeStats(result);
-        });
-      dbo.collection("gortarchive").createIndex({ DATEOBS: -1 }, function (err, result) {
-        //   console.log(result);
-      })
-    }
-  );
+  if (dbConnection) {
+    var dbo = dbConnection;
+    dbo
+      .collection("gortarchive")
+      .find(
+        {},
+        { projection: { _id: 0, filename: 1, OBJECT: 1, USER: 1, FILTER: 1, DATEOBS: 1 } }
+      )
+      .toArray(function (err, result) {
+        let tempresult = [];
+        for (var i = 0; i < result.length; i++) {
+          tempresult.push(result[i]["filename"]);
+        }
+        if (err) throw err;
+        syncEntries(tempresult);
+        makeStats(result);
+      });
+    dbo.collection("gortarchive").createIndex({ DATEOBS: -1 }, function (err, result) {
+
+    })
+  }
 }
+
 
 function syncEntries(entries) {
   getFiles("./img/", function (err, results) {
@@ -568,17 +547,12 @@ function makeStats(entries) {
     users: users_clean
   };
 
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("stats")
-        .replaceOne({ name: "lists" }, statsObj, { upsert: true });
-    }
-  );
+  if (dbConnection) {
+    var dbo = dbConnection;
+    dbo
+      .collection("stats")
+      .replaceOne({ name: "lists" }, statsObj, { upsert: true });
+  }
 
   //reporting stats
   var maxDate = 0;
@@ -668,23 +642,13 @@ function makeStats(entries) {
     minDate: minDate
   };
 
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("stats")
-        .replaceOne({ name: "reporting" }, fullStats, { upsert: true });
-    }
-  );
-
+  if (dbConnection) {
+    var dbo = dbConnection;
+    dbo
+      .collection("stats")
+      .replaceOne({ name: "reporting" }, fullStats, { upsert: true });
+  }
 }
-
-//Restructure this to use callbacks, so that the object list is fed into a function
-//that then gets the data, and the API call adds to the object when it's finished
-//run object API call as a function in the iteration, where object is an argument, just like it started
 
 //First in the chain: get a list of all objects in the archive. In the
 //function after the data is pulled, run objectApiCall on each one. This 
@@ -694,40 +658,34 @@ function getObjectData() {
 
   // console.log("Running getObjectData");
 
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("stats")
-        .find(
-          { name: "lists" },
-          { projection: { _id: 0, objects: 1 } }
-        )
-        .toArray(function (err, result) {
-          if (result && result[0] && result[0]['objects']) {
-            var objectList = result[0]['objects'];
-          } else {
-            var objectList = [];
-          }
-          for (object of objectList) {
-            objectApiCall(object)
-          }
-          if (err) throw err;
-          db.close();
+  if (dbConnection) {
 
-        });
-    }
-  );
+    var dbo = dbConnection;
+    dbo
+      .collection("stats")
+      .find(
+        { name: "lists" },
+        { projection: { _id: 0, objects: 1 } }
+      )
+      .toArray(function (err, result) {
+        if (result && result[0] && result[0]['objects']) {
+          var objectList = result[0]['objects'];
+        } else {
+          var objectList = [];
+        }
+        for (object of objectList) {
+          objectApiCall(object)
+        }
+        if (err) throw err;
+      });
+  }
 
 }
 
 //Make API call to get information on object types. We also build the first part of the 
 //database insert object here. This is a series of nested API calls. Sorry. Really I am.
 //If you want to get more detailed information for later, put another call using the same query system 
-//into the next nested area. Again. Sorry.
+//into the next nested area. Again. Sorry. See Simbad documentation for more details.
 
 function objectApiCall(object) {
   var databaseObject = {};
@@ -802,22 +760,13 @@ function objectApiCall(object) {
 }
 
 function writeObjectData(objectData) {
-  mongo.connect(
-    mongourl,
-    { useNewUrlParser: true, useUnifiedTopology: true },
-    function (err, db) {
-      if (err) throw err;
-      var dbo = db.db("gortarchive");
-      dbo
-        .collection("objectData")
-        .replaceOne({ name: objectData["name"] }, objectData, { upsert: true });
-    }
-  );
+  if (dbConnection) {
+    var dbo = dbConnection;
+    dbo
+      .collection("objectData")
+      .replaceOne({ name: objectData["name"] }, objectData, { upsert: true });
+  }
 }
 
-
-
-getEntries(); //Sync database on app restart. Pretty convenient to have here.
-getObjectData();
 
 app.listen(3001);
